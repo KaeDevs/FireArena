@@ -1,8 +1,14 @@
-# 7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM
-
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters, CallbackQueryHandler
+from telegram import Update, Bot
+from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
+from flask import Flask, request
 import logging
+
+# Flask app
+app = Flask(__name__)
+
+# Telegram Bot Token
+BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
+bot = Bot(token=BOT_TOKEN)
 
 # Enable logging
 logging.basicConfig(
@@ -14,7 +20,10 @@ logger = logging.getLogger(__name__)
 # Global Variables
 TOURNAMENT_REGISTRATIONS = {}  # Dictionary to store registrations
 
-# Commands
+# Initialize Dispatcher
+dispatcher = Dispatcher(bot, None, use_context=True)
+
+# Command Handlers
 def start(update: Update, context: CallbackContext) -> None:
     """Send a welcome message and instructions."""
     update.message.reply_text(
@@ -73,33 +82,22 @@ def unknown(update: Update, context: CallbackContext) -> None:
     """Handle unknown commands."""
     update.message.reply_text("Sorry, I didn't understand that command.")
 
-# Main Function
-def main() -> None:
-    """Start the bot."""
-    # Replace 'YOUR_BOT_TOKEN' with the token you got from BotFather
-    BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
+# Register Handlers with Dispatcher
+dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(CommandHandler("register", register))
+dispatcher.add_handler(CommandHandler("payment", payment))
+dispatcher.add_handler(CommandHandler("schedule", schedule))
+dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, save_registration))
+dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
-    # Create the Updater and pass it your bot's token
-    updater = Updater(BOT_TOKEN)
+# Flask Webhook Route
+@app.route(f"/{BOT_TOKEN}", methods=["POST"])
+def webhook() -> str:
+    """Webhook entry point for Telegram updates."""
+    update = Update.de_json(request.get_json(force=True), bot)
+    dispatcher.process_update(update)
+    return "OK", 200
 
-    # Get the dispatcher to register handlers
-    dispatcher = updater.dispatcher
-
-    # Command handlers
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("register", register))
-    dispatcher.add_handler(CommandHandler("payment", payment))
-    dispatcher.add_handler(CommandHandler("schedule", schedule))
-
-    # Message handler for team/player name during registration
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, save_registration))
-
-    # Unknown commands
-    dispatcher.add_handler(MessageHandler(Filters.command, unknown))
-
-    # Start the bot
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == '__main__':
-    main()
+# Main Entry Point
+if __name__ == "__main__":
+    app.run(port=5000)
