@@ -2,19 +2,18 @@ from telegram import Update, Bot
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
 from flask import Flask, request
 import logging
-from telegram.ext import Dispatcher
-
+import telegram  # Make sure to import telegram module
 
 # Flask app
 app = Flask(__name__)
-
-
 
 # Telegram Bot Token
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
 
+# Initialize Dispatcher
 dispatcher = Dispatcher(bot, None, use_context=True)
+
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -24,9 +23,6 @@ logger = logging.getLogger(__name__)
 
 # Global Variables
 TOURNAMENT_REGISTRATIONS = {}  # Dictionary to store registrations
-
-# Initialize Dispatcher
-dispatcher = Dispatcher(bot, None, use_context=True)
 
 # Command Handlers
 def start(update: Update, context: CallbackContext) -> None:
@@ -98,15 +94,15 @@ dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 # Flask Webhook Route
 @app.route('/<bot_token>', methods=['POST'])
 def webhook(bot_token):
+    if bot_token != BOT_TOKEN:
+        return "Invalid token", 400
     try:
         update = telegram.Update.de_json(request.get_json(force=True), bot)
-        # Handle the update here
+        dispatcher.process_update(update)  # Process the update using dispatcher
         return 'OK'
     except Exception as e:
         print(f"Error processing update: {e}")
         return 'Internal Server Error', 500
-
-
 
 # Main Entry Point
 if __name__ == "__main__":
