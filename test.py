@@ -96,15 +96,16 @@ dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, save_regi
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
-@app.route(f"/{BOT_TOKEN}", methods=["POST", "GET"])
-def webhook():
-    """Handle incoming webhook updates."""
-    if request.method == "GET":
-        return "Webhook endpoint is live!", 200  # For testing GET requests
+@app.route('/<bot_token>', methods=['POST'])
+def webhook(bot_token):
+    try:
+        update = telegram.Update.de_json(request.get_json(force=True), bot)
+        # Handle the update here
+        return 'OK'
+    except Exception as e:
+        print(f"Error processing update: {e}")
+        return 'Internal Server Error', 500
 
-    update = telegram.Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return "OK", 200
 
 
 # Main Entry Point
