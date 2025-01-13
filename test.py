@@ -92,11 +92,12 @@ dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def webhook() -> str:
-    """Webhook entry point for Telegram updates."""
-    update = Update.de_json(request.get_json(force=True), bot)
+def webhook():
+    """Handle incoming webhook updates."""
+    update = telegram.Update.de_json(request.get_json(force=True), bot)
     dispatcher.process_update(update)
     return "OK", 200
+
 
 # Main Entry Point
 if __name__ == "__main__":
