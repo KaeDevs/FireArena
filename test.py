@@ -2,14 +2,19 @@ from telegram import Update, Bot
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
 from flask import Flask, request
 import logging
+from telegram.ext import Dispatcher
+
 
 # Flask app
 app = Flask(__name__)
+
+
 
 # Telegram Bot Token
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
 
+dispatcher = Dispatcher(bot, None, use_context=True)
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
