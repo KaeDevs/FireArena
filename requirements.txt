@@ -4,3 +4,4 @@ Jinja2==2.11.3
 MarkupSafe==2.0.1
 python-telegram-bot==13.7
 pymongo==3.12.1 
+dnspython==2.2.1 
