@@ -13,7 +13,7 @@ BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
 
 client = MongoClient("mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay")
-db = client["Fire Play Arena"]  # Replace with your database name
+db = client["FirePlay"]  # Replace with your database name
 players_collection = db["players"]
 
 # Initialize Dispatcher
