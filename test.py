@@ -2,6 +2,7 @@ from telegram import Update, Bot
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
 from flask import Flask, request
 import logging
+from pymongo import MongoClient
 import telegram  # Make sure to import telegram module
 
 # Flask app
@@ -10,6 +11,10 @@ app = Flask(__name__)
 # Telegram Bot Token
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
+
+client = MongoClient("mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay")
+db = client["Fire Play Arena"]  # Replace with your database name
+players_collection = db["players"]
 
 # Initialize Dispatcher
 dispatcher = Dispatcher(bot, None, use_context=True)
@@ -37,16 +42,74 @@ def start(update: Update, context: CallbackContext) -> None:
         "For any issues, contact the admin through this bot."
     )
 
-def register(update: Update, context: CallbackContext) -> None:
+def register(update: Update, context: CallbackContext) -> int:
     """Register a team or player."""
     user = update.message.from_user
     chat_id = update.message.chat_id
 
-    # Ask for team/player name
-    update.message.reply_text(
-        "Please provide your team name or player name for registration:"
-    )
+    # Store initial user info
     TOURNAMENT_REGISTRATIONS[chat_id] = {"user_id": user.id, "username": user.username}
+    update.message.reply_text("Welcome! Please enter your team name.")
+    return TEAM_NAME
+
+
+def get_team_name(update: Update, context: CallbackContext) -> int:
+    chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS[chat_id]["team_name"] = update.message.text
+    update.message.reply_text("Enter Player 1's username:")
+    return PLAYER1
+
+
+def get_player1(update: Update, context: CallbackContext) -> int:
+    chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS[chat_id]["player1"] = update.message.text
+    update.message.reply_text("Enter Player 2's username:")
+    return PLAYER2
+
+
+def get_player2(update: Update, context: CallbackContext) -> int:
+    chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS[chat_id]["player2"] = update.message.text
+    update.message.reply_text("Enter Player 3's username:")
+    return PLAYER3
+
+
+def get_player3(update: Update, context: CallbackContext) -> int:
+    chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS[chat_id]["player3"] = update.message.text
+    update.message.reply_text("Enter Player 4's username:")
+    return PLAYER4
+
+
+def get_player4(update: Update, context: CallbackContext) -> int:
+    chat_id = update.message.chat_id
+    user_data = TOURNAMENT_REGISTRATIONS[chat_id]
+    user_data["player4"] = update.message.text
+
+    # Prepare data for MongoDB
+    data = {
+        "user_id": user_data["user_id"],
+        "username": user_data["username"],
+        "team_name": user_data["team_name"],
+        "players": [
+            user_data["player1"],
+            user_data["player2"],
+            user_data["player3"],
+            user_data["player4"]
+        ]
+    }
+
+    # Insert into MongoDB
+    players_collection.insert_one(data)
+
+    update.message.reply_text("Your team has been registered successfully!")
+    return ConversationHandler.END
+
+
+def cancel(update: Update, context: CallbackContext) -> int:
+    """Cancel the registration process."""
+    update.message.reply_text("Registration cancelled.")
+    return ConversationHandler.END
 
 def save_registration(update: Update, context: CallbackContext) -> None:
     """Save the team or player name."""
