@@ -32,6 +32,8 @@ def start(update: Update, context: CallbackContext) -> None:
         "Use /register to register your team or yourself for the tournament.\n"
         "Use /schedule to view upcoming matches.\n"
         "Use /payment to complete your registration fee.\n"
+        "Use /rules to view the match rules.\n"
+        "Use /info to understand the process in detail.\n"
         "For any issues, contact the admin through this bot."
     )
 
@@ -79,6 +81,31 @@ def schedule(update: Update, context: CallbackContext) -> None:
         "Stay tuned for more updates!"
     )
 
+def rules(update: Update, context: CallbackContext) -> None:
+    """Show the rules of the match."""
+    update.message.reply_text(
+        "Match Rules:\n"
+        "1. No use of hacks or third-party software.\n"
+        "2. Teams must join the room 10 minutes before the match.\n"
+        "3. Players who disconnect during the match will not be allowed to rejoin.\n"
+        "4. Abusive language and unsportsmanlike behavior will result in disqualification.\n"
+        "5. Admin decisions are final in all disputes.\n"
+        "Play fair and enjoy the tournament!"
+    )
+
+def info(update: Update, context: CallbackContext) -> None:
+    """Explain the tournament process."""
+    update.message.reply_text(
+        "Tournament Process:\n"
+        "1. Use /register to register your team or yourself.\n"
+        "2. After registration, complete the registration fee using /payment.\n"
+        "3. Once payment is confirmed, you will receive match details and the room code.\n"
+        "4. Join the match at the scheduled time using the room code provided.\n"
+        "5. Keep track of your progress through this bot, and use /schedule to check future matches.\n"
+        "For any issues, contact the admin through this bot.\n\n"
+        "Good luck and have fun!"
+    )
+
 def unknown(update: Update, context: CallbackContext) -> None:
     """Handle unknown commands."""
     update.message.reply_text("Sorry, I didn't understand that command.")
@@ -88,8 +115,17 @@ dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(CommandHandler("register", register))
 dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
+dispatcher.add_handler(CommandHandler("rules", rules))
+dispatcher.add_handler(CommandHandler("info", info))
 dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, save_registration))
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
+# # Register Handlers with Dispatcher
+# dispatcher.add_handler(CommandHandler("start", start))
+# dispatcher.add_handler(CommandHandler("register", register))
+# dispatcher.add_handler(CommandHandler("payment", payment))
+# dispatcher.add_handler(CommandHandler("schedule", schedule))
+# dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, save_registration))
+# dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
 @app.route('/<bot_token>', methods=['POST'])
