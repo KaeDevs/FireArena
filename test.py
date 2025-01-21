@@ -2,6 +2,7 @@ from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 from flask import Flask, request
 import logging
+import os
 from pymongo import MongoClient, errors
 import telegram
 
@@ -14,15 +15,24 @@ bot = Bot(token=BOT_TOKEN)
 
 # MongoDB Configuration
 try:
+    mongodb_uri = os.getenv('MONGODB_URI')
     client = MongoClient(
-        "mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay"
+        mongodb_uri
     )
     db = client["FirePlay"]  # Replace with your database name
-    players_collection = db["players"]
+    players_collection = db["teams"]
     print("Connected to MongoDB successfully!")
 except errors.ConnectionError as e:
     print(f"Failed to connect to MongoDB: {e}")
     exit()
+
+try:
+    # Test connection to MongoDB
+    client.admin.command('ping')
+    print("MongoDB connection successful!")
+except Exception as e:
+    print(f"Error connecting to MongoDB: {e}")
+
 
 # Updater and Dispatcher
 updater = Updater(token=BOT_TOKEN, use_context=True)
