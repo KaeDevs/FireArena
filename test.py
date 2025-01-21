@@ -18,17 +18,6 @@ cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-04fe6a337
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://console.firebase.google.com/u/0/project/fireplay-99a60/database/fireplay-99a60-default-rtdb/data/~2F'  # Replace with your database URL
 })
-# MongoDB Configuration
-try:
-    client = MongoClient(
-        "mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay"
-    )
-    db = client["FirePlay"]  # Replace with your database name
-    players_collection = db
-    print("Connected to MongoDB successfully!")
-except errors.ConnectionError as e:
-    print(f"Failed to connect to MongoDB: {e}")
-    exit()
 
 # Updater and Dispatcher
 updater = Updater(token=BOT_TOKEN, use_context=True)
