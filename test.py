@@ -14,7 +14,7 @@ app = Flask(__name__)
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
 
-cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-7fcc8c99b4.json")
+cred = credentials.Certificate("credentials.json")
 firebase_admin.initialize_app(cred ,
                               {
     'databaseURL': 'https://fireplay-99a60-default-rtdb.firebaseio.com/'  # Replace with your database URL
