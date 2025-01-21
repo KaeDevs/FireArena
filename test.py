@@ -2,7 +2,7 @@ from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 from flask import Flask, request
 import logging
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 import telegram
 
 # Flask app
@@ -12,9 +12,17 @@ app = Flask(__name__)
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
 
-client = MongoClient("mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay")
-db = client["FirePlay"]  # Replace with your database name
-players_collection = db["players"]
+# MongoDB Configuration
+try:
+    client = MongoClient(
+        "mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay"
+    )
+    db = client["FirePlay"]  # Replace with your database name
+    players_collection = db["players"]
+    print("Connected to MongoDB successfully!")
+except errors.ConnectionError as e:
+    print(f"Failed to connect to MongoDB: {e}")
+    exit()
 
 # Updater and Dispatcher
 updater = Updater(token=BOT_TOKEN, use_context=True)
@@ -22,8 +30,8 @@ dispatcher = updater.dispatcher
 
 # Enable logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
@@ -45,6 +53,7 @@ def start(update: Update, context: CallbackContext) -> None:
         "For any issues, contact the admin through this bot."
     )
 
+
 def register(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
     chat_id = update.message.chat_id
@@ -53,47 +62,58 @@ def register(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Welcome! Please enter your team name.")
     return TEAM_NAME
 
+
 def get_team_name(update: Update, context: CallbackContext) -> int:
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["team_name"] = update.message.text
     update.message.reply_text("Enter Player 1's username:")
     return PLAYER1
 
-# Other player handlers remain the same as in your provided code.
 
 def get_player1(update: Update, context: CallbackContext) -> int:
-    """Get Player 1's username."""
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["player1"] = update.message.text
     update.message.reply_text("Enter Player 2's username:")
     return PLAYER2
 
+
 def get_player2(update: Update, context: CallbackContext) -> int:
-    """Get Player 2's username."""
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["player2"] = update.message.text
     update.message.reply_text("Enter Player 3's username:")
     return PLAYER3
 
+
 def get_player3(update: Update, context: CallbackContext) -> int:
-    """Get Player 3's username."""
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["player3"] = update.message.text
     update.message.reply_text("Enter Player 4's username:")
     return PLAYER4
 
+
 def get_player4(update: Update, context: CallbackContext) -> int:
-    """Get Player 4's username and complete registration."""
     chat_id = update.message.chat_id
     user_data = TOURNAMENT_REGISTRATIONS[chat_id]
     user_data["player4"] = update.message.text
+
+    # Save data to MongoDB
+    try:
+        players_collection.insert_one(user_data)
+        update.message.reply_text(
+            "Team registration complete! You can use /schedule to view upcoming matches or /payment to complete your registration fee."
+        )
+    except Exception as e:
+        logger.error(f"Failed to save registration to database: {e}")
+        update.message.reply_text("An error occurred while saving your registration. Please try again.")
+    
+    return ConversationHandler.END
 
 
 def cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Registration cancelled.")
     return ConversationHandler.END
 
-# Additional Handlers
+
 def payment(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     if chat_id in TOURNAMENT_REGISTRATIONS:
@@ -105,6 +125,7 @@ def payment(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text("You need to register first using /register.")
 
+
 def schedule(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
         "Upcoming Matches:\n"
@@ -113,8 +134,10 @@ def schedule(update: Update, context: CallbackContext) -> None:
         "Stay tuned for more updates!"
     )
 
+
 def unknown(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Sorry, I didn't understand that command.")
+
 
 # Conversation Handler
 conversation_handler = ConversationHandler(
@@ -137,17 +160,18 @@ dispatcher.add_handler(CommandHandler("schedule", schedule))
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
-@app.route('/<bot_token>', methods=['POST'])
+@app.route("/<bot_token>", methods=["POST"])
 def webhook(bot_token):
     if bot_token != BOT_TOKEN:
         return "Invalid token", 400
     try:
         update = telegram.Update.de_json(request.get_json(force=True), bot)
         dispatcher.process_update(update)
-        return 'OK'
+        return "OK"
     except Exception as e:
-        print(f"Error processing update: {e}")
-        return 'Internal Server Error', 500
+        logger.error(f"Error processing update: {e}")
+        return "Internal Server Error", 500
+
 
 # Main Entry Point
 if __name__ == "__main__":
