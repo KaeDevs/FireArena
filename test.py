@@ -4,6 +4,8 @@ from flask import Flask, request
 import logging
 from pymongo import MongoClient, errors
 import telegram
+import firebase_admin
+from firebase_admin import credentials, db
 
 # Flask app
 app = Flask(__name__)
@@ -12,13 +14,17 @@ app = Flask(__name__)
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
 
+cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-04fe6a337f.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://console.firebase.google.com/u/0/project/fireplay-99a60/database/fireplay-99a60-default-rtdb/data/~2F'  # Replace with your database URL
+})
 # MongoDB Configuration
 try:
     client = MongoClient(
         "mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay"
     )
     db = client["FirePlay"]  # Replace with your database name
-    players_collection = db["players"]
+    players_collection = db
     print("Connected to MongoDB successfully!")
 except errors.ConnectionError as e:
     print(f"Failed to connect to MongoDB: {e}")
@@ -52,6 +58,20 @@ def start(update: Update, context: CallbackContext) -> None:
         "Use /info to understand the process in detail.\n"
         "For any issues, contact the admin through this bot."
     )
+
+def add_team_data(team_id, team_data):
+    ref = db.reference(f"teams/{team_id}")  # Structure: /teams/{team_id}
+    ref.set(team_data)  # Writes or overwrites the data
+
+def get_team_data(team_id):
+    ref = db.reference(f"teams/{team_id}")
+    return ref.get()  # Fetches the data for the given team ID
+def update_team_data(team_id, key, value):
+    ref = db.reference(f"teams/{team_id}")
+    ref.update({key: value})  # Updates only specific keys
+def delete_team_data(team_id):
+    ref = db.reference(f"teams/{team_id}")
+    ref.delete()  # Deletes the team data
 
 
 def register(update: Update, context: CallbackContext) -> int:
@@ -101,28 +121,19 @@ def get_player4(update: Update, context: CallbackContext) -> int:
 
     # Attempt to save data to MongoDB
     try:
-        # Check if the user data is in the expected format
-        if not all(key in user_data for key in ["team_name", "player1", "player2", "player3", "player4"]):
-            raise ValueError("Missing required player information.")
-
-        players_collection.insert_one(user_data)
+        # Save data to Firebase
+        team_id = f"team_{chat_id}"  # Unique ID for the team
+        add_team_data(team_id, user_data)
         update.message.reply_text(
-            "Team registration complete! You can use /schedule to view upcoming matches or /payment to complete your registration fee."
+            "Team registration complete! Data saved to the cloud. Use /schedule to view matches or /payment to complete registration."
         )
-    except ValueError as ve:
-        # Handle validation errors, e.g., missing player data
-        logger.error(f"Validation Error: {ve}")
-        update.message.reply_text("Incomplete team registration. Please ensure all players' usernames are provided.")
-    except errors.ConnectionError as ce:
-        # Handle MongoDB connection errors
-        logger.error(f"MongoDB Connection Error: {ce}")
-        update.message.reply_text("Could not connect to the database. Please try again later.")
     except Exception as e:
-        # General error handling
-        logger.error(f"Failed to save registration to database: {e}")
+        logger.error(f"Error saving to Firebase: {e}")
         update.message.reply_text("An error occurred while saving your registration. Please try again.")
-    
+
     return ConversationHandler.END
+    
+   
 
 
 
