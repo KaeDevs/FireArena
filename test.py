@@ -1,9 +1,9 @@
 from telegram import Update, Bot
-from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 from flask import Flask, request
 import logging
 from pymongo import MongoClient
-import telegram  # Make sure to import telegram module
+import telegram
 
 # Flask app
 app = Flask(__name__)
@@ -16,8 +16,8 @@ client = MongoClient("mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.m
 db = client["FirePlay"]  # Replace with your database name
 players_collection = db["players"]
 
-# Initialize Dispatcher
-dispatcher = Dispatcher(bot, None, use_context=True)
+# Initialize Application (instead of Dispatcher)
+application = Application.builder().token(BOT_TOKEN).build()
 
 # Enable logging
 logging.basicConfig(
@@ -29,8 +29,11 @@ logger = logging.getLogger(__name__)
 # Global Variables
 TOURNAMENT_REGISTRATIONS = {}  # Dictionary to store registrations
 
+# Conversation steps
+TEAM_NAME, PLAYER1, PLAYER2, PLAYER3, PLAYER4 = range(5)
+
 # Command Handlers
-def start(update: Update, context: CallbackContext) -> None:
+def start(update: Update, context: CallbackContext) -> int:
     """Send a welcome message and instructions."""
     update.message.reply_text(
         "Welcome to the Free Fire Tournament Bot!\n"
@@ -43,7 +46,7 @@ def start(update: Update, context: CallbackContext) -> None:
     )
 
 def register(update: Update, context: CallbackContext) -> int:
-    """Register a team or player."""
+    """Start the registration process for a team or player."""
     user = update.message.from_user
     chat_id = update.message.chat_id
 
@@ -52,36 +55,36 @@ def register(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Welcome! Please enter your team name.")
     return TEAM_NAME
 
-
 def get_team_name(update: Update, context: CallbackContext) -> int:
+    """Get the team name."""
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["team_name"] = update.message.text
     update.message.reply_text("Enter Player 1's username:")
     return PLAYER1
 
-
 def get_player1(update: Update, context: CallbackContext) -> int:
+    """Get Player 1's username."""
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["player1"] = update.message.text
     update.message.reply_text("Enter Player 2's username:")
     return PLAYER2
 
-
 def get_player2(update: Update, context: CallbackContext) -> int:
+    """Get Player 2's username."""
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["player2"] = update.message.text
     update.message.reply_text("Enter Player 3's username:")
     return PLAYER3
 
-
 def get_player3(update: Update, context: CallbackContext) -> int:
+    """Get Player 3's username."""
     chat_id = update.message.chat_id
     TOURNAMENT_REGISTRATIONS[chat_id]["player3"] = update.message.text
     update.message.reply_text("Enter Player 4's username:")
     return PLAYER4
 
-
 def get_player4(update: Update, context: CallbackContext) -> int:
+    """Get Player 4's username and complete registration."""
     chat_id = update.message.chat_id
     user_data = TOURNAMENT_REGISTRATIONS[chat_id]
     user_data["player4"] = update.message.text
@@ -105,23 +108,10 @@ def get_player4(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Your team has been registered successfully!")
     return ConversationHandler.END
 
-
 def cancel(update: Update, context: CallbackContext) -> int:
     """Cancel the registration process."""
     update.message.reply_text("Registration cancelled.")
     return ConversationHandler.END
-
-def save_registration(update: Update, context: CallbackContext) -> None:
-    """Save the team or player name."""
-    chat_id = update.message.chat_id
-    if chat_id in TOURNAMENT_REGISTRATIONS:
-        TOURNAMENT_REGISTRATIONS[chat_id]["team_name"] = update.message.text
-        update.message.reply_text(
-            f"Thank you! Team/Player '{update.message.text}' has been registered.\n"
-            "Use /payment to complete the registration."
-        )
-    else:
-        update.message.reply_text("Please start registration using /register first.")
 
 def payment(update: Update, context: CallbackContext) -> None:
     """Send the payment link."""
@@ -173,22 +163,27 @@ def unknown(update: Update, context: CallbackContext) -> None:
     """Handle unknown commands."""
     update.message.reply_text("Sorry, I didn't understand that command.")
 
-# Register Handlers with Dispatcher
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(CommandHandler("register", register))
-dispatcher.add_handler(CommandHandler("payment", payment))
-dispatcher.add_handler(CommandHandler("schedule", schedule))
-dispatcher.add_handler(CommandHandler("rules", rules))
-dispatcher.add_handler(CommandHandler("info", info))
-dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, save_registration))
-dispatcher.add_handler(MessageHandler(Filters.command, unknown))
-# # Register Handlers with Dispatcher
-# dispatcher.add_handler(CommandHandler("start", start))
-# dispatcher.add_handler(CommandHandler("register", register))
-# dispatcher.add_handler(CommandHandler("payment", payment))
-# dispatcher.add_handler(CommandHandler("schedule", schedule))
-# dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, save_registration))
-# dispatcher.add_handler(MessageHandler(Filters.command, unknown))
+# Register ConversationHandler for multi-step registration
+conversation_handler = ConversationHandler(
+    entry_points=[CommandHandler("register", register)],
+    states={
+        TEAM_NAME: [MessageHandler(Filters.text & ~Filters.command, get_team_name)],
+        PLAYER1: [MessageHandler(Filters.text & ~Filters.command, get_player1)],
+        PLAYER2: [MessageHandler(Filters.text & ~Filters.command, get_player2)],
+        PLAYER3: [MessageHandler(Filters.text & ~Filters.command, get_player3)],
+        PLAYER4: [MessageHandler(Filters.text & ~Filters.command, get_player4)],
+    },
+    fallbacks=[CommandHandler("cancel", cancel)],
+)
+
+# Register Handlers with Application
+application.add_handler(CommandHandler("start", start))
+application.add_handler(conversation_handler)
+application.add_handler(CommandHandler("payment", payment))
+application.add_handler(CommandHandler("schedule", schedule))
+application.add_handler(CommandHandler("rules", rules))
+application.add_handler(CommandHandler("info", info))
+application.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
 @app.route('/<bot_token>', methods=['POST'])
@@ -197,7 +192,7 @@ def webhook(bot_token):
         return "Invalid token", 400
     try:
         update = telegram.Update.de_json(request.get_json(force=True), bot)
-        dispatcher.process_update(update)  # Process the update using dispatcher
+        application.process_update(update)  # Process the update using application
         return 'OK'
     except Exception as e:
         print(f"Error processing update: {e}")
