@@ -96,17 +96,34 @@ def get_player4(update: Update, context: CallbackContext) -> int:
     user_data = TOURNAMENT_REGISTRATIONS[chat_id]
     user_data["player4"] = update.message.text
 
-    # Save data to MongoDB
+    # Debugging: Print the data to be inserted into MongoDB
+    logger.info(f"Data to insert: {user_data}")
+
+    # Attempt to save data to MongoDB
     try:
+        # Check if the user data is in the expected format
+        if not all(key in user_data for key in ["team_name", "player1", "player2", "player3", "player4"]):
+            raise ValueError("Missing required player information.")
+
         players_collection.insert_one(user_data)
         update.message.reply_text(
             "Team registration complete! You can use /schedule to view upcoming matches or /payment to complete your registration fee."
         )
+    except ValueError as ve:
+        # Handle validation errors, e.g., missing player data
+        logger.error(f"Validation Error: {ve}")
+        update.message.reply_text("Incomplete team registration. Please ensure all players' usernames are provided.")
+    except errors.ConnectionError as ce:
+        # Handle MongoDB connection errors
+        logger.error(f"MongoDB Connection Error: {ce}")
+        update.message.reply_text("Could not connect to the database. Please try again later.")
     except Exception as e:
+        # General error handling
         logger.error(f"Failed to save registration to database: {e}")
         update.message.reply_text("An error occurred while saving your registration. Please try again.")
     
     return ConversationHandler.END
+
 
 
 def cancel(update: Update, context: CallbackContext) -> int:
@@ -133,7 +150,29 @@ def schedule(update: Update, context: CallbackContext) -> None:
         "2. Match 2: Jan 16, 6 PM (Room Code: ABC456)\n"
         "Stay tuned for more updates!"
     )
-
+def rules(update: Update, context: CallbackContext) -> None:
+    """Show the rules of the match."""
+    update.message.reply_text(
+        "Match Rules:\n"
+        "1. No use of hacks or third-party software.\n"
+        "2. Teams must join the room 10 minutes before the match.\n"
+        "3. Players who disconnect during the match will not be allowed to rejoin.\n"
+        "4. Abusive language and unsportsmanlike behavior will result in disqualification.\n"
+        "5. Admin decisions are final in all disputes.\n"
+        "Play fair and enjoy the tournament!"
+    )
+def info(update: Update, context: CallbackContext) -> None:
+    """Explain the tournament process."""
+    update.message.reply_text(
+        "Tournament Process:\n"
+        "1. Use /register to register your team or yourself.\n"
+        "2. After registration, complete the registration fee using /payment.\n"
+        "3. Once payment is confirmed, you will receive match details and the room code.\n"
+        "4. Join the match at the scheduled time using the room code provided.\n"
+        "5. Keep track of your progress through this bot, and use /schedule to check future matches.\n"
+        "For any issues, contact the admin through this bot.\n\n"
+        "Good luck and have fun!"
+    )
 
 def unknown(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Sorry, I didn't understand that command.")
