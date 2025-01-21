@@ -14,10 +14,11 @@ app = Flask(__name__)
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 bot = Bot(token=BOT_TOKEN)
 
-cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-04fe6a337f.json")
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://fireplay-99a60-default-rtdb.firebaseio.com/'  # Replace with your database URL
-})
+cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-7fcc8c99b4.json")
+firebase_admin.initialize_app(cred )
+                            #   {
+#     'databaseURL': 'https://fireplay-99a60-default-rtdb.firebaseio.com/'  # Replace with your database URL
+# })
 
 # Updater and Dispatcher
 updater = Updater(token=BOT_TOKEN, use_context=True)
