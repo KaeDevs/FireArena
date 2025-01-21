@@ -196,6 +196,7 @@ conversation_handler = ConversationHandler(
 dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler("payment", payment))
+dispatcher.add_handler(CommandHandler("register", register))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
 dispatcher.add_handler(CommandHandler("info", info)) 
