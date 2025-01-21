@@ -61,6 +61,34 @@ def get_team_name(update: Update, context: CallbackContext) -> int:
 
 # Other player handlers remain the same as in your provided code.
 
+def get_player1(update: Update, context: CallbackContext) -> int:
+    """Get Player 1's username."""
+    chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS[chat_id]["player1"] = update.message.text
+    update.message.reply_text("Enter Player 2's username:")
+    return PLAYER2
+
+def get_player2(update: Update, context: CallbackContext) -> int:
+    """Get Player 2's username."""
+    chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS[chat_id]["player2"] = update.message.text
+    update.message.reply_text("Enter Player 3's username:")
+    return PLAYER3
+
+def get_player3(update: Update, context: CallbackContext) -> int:
+    """Get Player 3's username."""
+    chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS[chat_id]["player3"] = update.message.text
+    update.message.reply_text("Enter Player 4's username:")
+    return PLAYER4
+
+def get_player4(update: Update, context: CallbackContext) -> int:
+    """Get Player 4's username and complete registration."""
+    chat_id = update.message.chat_id
+    user_data = TOURNAMENT_REGISTRATIONS[chat_id]
+    user_data["player4"] = update.message.text
+
+
 def cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Registration cancelled.")
     return ConversationHandler.END
