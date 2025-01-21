@@ -16,7 +16,7 @@ bot = Bot(token=BOT_TOKEN)
 
 cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-04fe6a337f.json")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://console.firebase.google.com/u/0/project/fireplay-99a60/database/fireplay-99a60-default-rtdb/data/~2F'  # Replace with your database URL
+    'databaseURL': 'https://fireplay-99a60-default-rtdb.firebaseio.com/'  # Replace with your database URL
 })
 
 # Updater and Dispatcher
