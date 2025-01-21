@@ -150,28 +150,29 @@ def schedule(update: Update, context: CallbackContext) -> None:
         "2. Match 2: Jan 16, 6 PM (Room Code: ABC456)\n"
         "Stay tuned for more updates!"
     )
+
 def rules(update: Update, context: CallbackContext) -> None:
-    """Show the rules of the match."""
     update.message.reply_text(
-        "Match Rules:\n"
-        "1. No use of hacks or third-party software.\n"
-        "2. Teams must join the room 10 minutes before the match.\n"
-        "3. Players who disconnect during the match will not be allowed to rejoin.\n"
-        "4. Abusive language and unsportsmanlike behavior will result in disqualification.\n"
-        "5. Admin decisions are final in all disputes.\n"
-        "Play fair and enjoy the tournament!"
+        "Tournament Rules:\n"
+        "1. Teams must consist of 4 players.\n"
+        "2. No cheating or exploiting bugs.\n"
+        "3. Each match will have a specific room code provided before the match.\n"
+        "4. The team leader is responsible for communication and ensuring all players are registered.\n"
+        "5. Players must be available at the scheduled match time.\n"
+        "6. The winner will be decided based on in-game performance and team coordination.\n"
+        "For any clarifications, please reach out to the admin."
     )
+
+
 def info(update: Update, context: CallbackContext) -> None:
-    """Explain the tournament process."""
     update.message.reply_text(
-        "Tournament Process:\n"
-        "1. Use /register to register your team or yourself.\n"
-        "2. After registration, complete the registration fee using /payment.\n"
-        "3. Once payment is confirmed, you will receive match details and the room code.\n"
-        "4. Join the match at the scheduled time using the room code provided.\n"
-        "5. Keep track of your progress through this bot, and use /schedule to check future matches.\n"
-        "For any issues, contact the admin through this bot.\n\n"
-        "Good luck and have fun!"
+        "Tournament Information:\n"
+        "1. To participate, use the /register command to register your team.\n"
+        "2. After registration, you'll receive a payment link to complete the registration fee.\n"
+        "3. Once the payment is confirmed, you will be eligible for upcoming matches.\n"
+        "4. View the upcoming matches using /schedule.\n"
+        "5. For any issues, contact the admin through this bot.\n"
+        "Good luck to all participants!"
     )
 
 def unknown(update: Update, context: CallbackContext) -> None:
@@ -196,6 +197,8 @@ dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
+dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
+dispatcher.add_handler(CommandHandler("info", info)) 
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
