@@ -44,7 +44,8 @@ TOURNAMENT_REGISTRATIONS = {
     "player2": "Player 2b",
     "player3": "Player 2b",
     "player4": "Player 2b",
-    "payment": "false"
+    "payment": "false",
+    "roomid" : "ag123"
 }  # Dictionary to store registrations
 
 # Conversation steps
