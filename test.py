@@ -2,6 +2,7 @@ from sqlite3 import Time
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 from flask import Flask, request
+import totest
 import logging
 import time
 from pymongo import MongoClient, errors
@@ -161,11 +162,16 @@ def payment(update: Update, context: CallbackContext) -> None:
 
 
 def schedule(update: Update, context: CallbackContext) -> None:
+    totest.process_tournament()
     update.message.reply_text(
         "Upcoming Matches:\n"
         "1. Match 1: Jan 15, 6 PM (Room Code: XYZ123)\n"
         "2. Match 2: Jan 16, 6 PM (Room Code: ABC456)\n"
         "Stay tuned for more updates!"
+    )
+def clearmatch(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(
+        "Matches Cleared\n"
     )
 
 def rules(update: Update, context: CallbackContext) -> None:
@@ -241,6 +247,7 @@ dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("register", register))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
+dispatcher.add_handler(CommandHandler("clearmatch", clearmatch))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
 dispatcher.add_handler(CommandHandler("info", info)) 
 dispatcher.add_handler(CommandHandler("creatormode", creator_mode)) 

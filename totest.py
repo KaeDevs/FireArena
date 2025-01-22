@@ -42,115 +42,125 @@
 import json
 import random
 from datetime import datetime, timedelta
-from math import ceil, log2
-from flask import request
 import requests
 
 URL = "https://api.jsonbin.io/v3/b/6790d61ee41b4d34e47ccfc4"
+matURL = "https://api.jsonbin.io/v3/b/6790fa0bad19ca34f8f295be"
 
 headers = {
     "Content-Type": "application/json",
     "X-Master-Key": "$2a$10$zCxD0eePhaxSpav1iZtzzO41se.8HoND.wMVD5IYqeQpGX3QqYfai"
 }
 
-# Function to get teams data
+# Function to fetch tournament data
+def fetch_tournament_data():
+    response = requests.get(matURL, headers=headers)
+    if response.status_code == 200:
+        return response.json()['record']
+    else:
+        print(f"Error fetching tournament data: {response.status_code}")
+        return None
+
+# Function to fetch teams data
 def get_teams_data():
     response = requests.get(URL, headers=headers)
     if response.status_code == 200:
-        current_data = response.json()['record']
-        print("Current data:", current_data)
+        return response.json()['record']
     else:
-        print(f"Error fetching data: {response.status_code}")
-        exit()
-    return current_data
+        print(f"Error fetching teams data: {response.status_code}")
+        return None
 
-# Function to analyze teams
-def analyze_teams(teams_data):
-    team_count = len(teams_data)
-    print(f"Total teams: {team_count}")
-    for team in teams_data:
-        print(f"Team {team['team_name']} has players: {team['player1']}, {team['player2']}, {team['player3']}, {team['player4']}")
-        print(f"Payment status: {team['payment']}")
-
-# Function to calculate the number of rounds and initialize the JSON structure
-def initialize_rounds(teams_data):
-    total_teams = len(teams_data)
-    total_rounds = ceil(log2(total_teams))  # Calculate the total rounds needed
-    print(f"Total rounds needed: {total_rounds}")
-
-    # Initialize the structure for all rounds
-    tournament_structure = {
-        f"round_{i+1}": [] for i in range(total_rounds)
-    }
-
-    return tournament_structure, total_rounds
-
-# Function to schedule only the first round of matches
-def schedule_round_one(teams_data):
-    random.shuffle(teams_data)
+# Function to schedule matches for a round
+def schedule_matches(teams, round_number):
+    random.shuffle(teams)
     current_time = datetime.now()
-    round_one_matches = []
+    matches = []
     left_out_team = None
 
-    # Handle odd number of teams: leave out one team for a bye
-    if len(teams_data) % 2 != 0:
-        left_out_team = teams_data.pop()
+    if len(teams) % 2 != 0:
+        left_out_team = teams.pop()
 
     match_id = 1
-    for i in range(0, len(teams_data), 2):
-        if i + 1 < len(teams_data):
-            team1 = teams_data[i]
-            team2 = teams_data[i + 1]
-            match_room_id = f"room_1_{match_id}"
-            match_time = current_time + timedelta(hours=match_id * 2)
+    for i in range(0, len(teams), 2):
+        match_details = {
+            "round": round_number,
+            "match_id": match_id,
+            "team1": teams[i]['team_name'],
+            "team2": teams[i + 1]['team_name'],
+            "match_room_id": f"room_{round_number}_{match_id}",
+            "scheduled_time": (current_time + timedelta(hours=match_id * 2)).strftime('%Y-%m-%d %H:%M:%S'),
+            "winner": None
+        }
+        matches.append(match_details)
+        match_id += 1
 
-            match_details = {
-                "round": 1,
-                "match_id": match_id,
-                "team1": team1['team_name'],
-                "team2": team2['team_name'],
-                "match_room_id": match_room_id,
-                "scheduled_time": match_time.strftime('%Y-%m-%d %H:%M:%S'),
-                "winner": None  # Placeholder for spectator updates
-            }
+    return matches, left_out_team
 
-            round_one_matches.append(match_details)
-            match_id += 1
+# Function to save tournament data
+def save_tournament_data(tournament_data):
+    response = requests.put(matURL, headers=headers, json=tournament_data)
+    if response.status_code == 200:
+        print("Tournament data updated successfully!")
+    else:
+        print(f"Error updating tournament data: {response.status_code}")
 
-    return round_one_matches, left_out_team
+# Main function to handle the rounds
+def process_tournament():
+    # Step 1: Fetch the tournament data
+    tournament_data = fetch_tournament_data()
+    if not tournament_data:
+        return
 
-# Function to save tournament structure to a JSON file
-def save_tournament_structure(tournament_structure, round_one_matches, left_out_team):
-    # Populate round_one with matches and left-out team
-    tournament_structure["round_1"] = {
-        "matches": round_one_matches,
-        "left_out_team": left_out_team['team_name'] if left_out_team else None
-    }
+    # Step 2: Check if round 1 is empty
+    if "round_1" not in tournament_data or not isinstance(tournament_data["round_1"], list) or not tournament_data["round_1"]:
+        print("Round 1 is empty. Scheduling matches for Round 1...")
+        teams_data = get_teams_data()
+        if not teams_data:
+            return
 
-    matURL = "https://api.jsonbin.io/v3/b/6790fa0bad19ca34f8f295be"
-    matreq = requests.put(matURL, headers=headers, json=tournament_structure)
+        round_one_matches, left_out_team = schedule_matches(teams_data, 1)
+        tournament_data["round_1"] = round_one_matches
+        tournament_data["left_out_team"] = left_out_team['team_name'] if left_out_team else None
+        save_tournament_data(tournament_data)
+        print("Round 1 matches scheduled.")
+        return
 
-    with open('tournament_structure.json', 'w') as f:
-        json.dump(tournament_structure, f, indent=4)
+    # Step 3: Process next round if all winners in current round are available
+    current_round = 1
+    while f"round_{current_round}" in tournament_data:
+        round_matches = tournament_data[f"round_{current_round}"]
 
-# Main function to run the program
-def main():
-    # Fetch teams data
-    teams_data = get_teams_data()
+        # Debugging: Print the structure of round_matches
+        print(f"Debug: round_{current_round} matches - {round_matches}")
+        
+        # Validate that round_matches is a list of dictionaries
+        if not isinstance(round_matches, list) or not all(isinstance(match, dict) for match in round_matches):
+            print(f"Error: round_{current_round} does not contain valid match data.")
+            return
 
-    # Analyze teams
-    analyze_teams(teams_data)
+        # Check if any match has a null winner
+        if any(match.get('winner') is None for match in round_matches):
+            print(f"Round {current_round} has incomplete matches. Waiting for results.")
+            return
 
-    # Initialize tournament structure
-    tournament_structure, total_rounds = initialize_rounds(teams_data)
+        # Collect winners from the current round
+        winners = [
+            {"team_name": match['winner']}
+            for match in round_matches if match['winner']
+        ]
+        if tournament_data["left_out_team"]:
+            winners.append({"team_name": tournament_data["left_out_team"]})
 
-    # Schedule round 1 matches
-    round_one_matches, left_out_team = schedule_round_one(teams_data)
+        # Schedule the next round
+        next_round = current_round + 1
+        print(f"Scheduling matches for Round {next_round}...")
+        next_round_matches, left_out_team = schedule_matches(winners, next_round)
+        tournament_data[f"round_{next_round}"] = next_round_matches
+        tournament_data["left_out_team"] = left_out_team['team_name'] if left_out_team else None
+        save_tournament_data(tournament_data)
+        print(f"Round {next_round} matches scheduled.")
+        current_round = next_round
 
-    # Save tournament structure with round 1 populated
-    save_tournament_structure(tournament_structure, round_one_matches, left_out_team)
-
-    print(f"Tournament structure with {total_rounds} rounds created and saved to tournament_structure.json")
-
+# Run the tournament processing
 if __name__ == "__main__":
-    main()
+    process_tournament()
