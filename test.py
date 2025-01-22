@@ -195,7 +195,7 @@ def creator_mode(update: Update, context: CallbackContext) -> None:
         "Enter Login Credentials...\n" 
     )
     name = update.message.text
-    crereq = requests.get(url=creURL)['record']
+    crereq = requests.get(url=creURL, headers= headers).json()['record']
     for i in crereq:
         update.message.reply_text(i)
         if name == i["name"]:
