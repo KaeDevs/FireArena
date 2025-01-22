@@ -1,7 +1,9 @@
+from sqlite3 import Time
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 from flask import Flask, request
 import logging
+import time
 from pymongo import MongoClient, errors
 import telegram
 import requests
@@ -197,19 +199,22 @@ def creator_mode(update: Update, context: CallbackContext) -> None:
     name = update.message.text
     crereq = requests.get(url=creURL, headers= headers).json()['record']
     for i in crereq:
-        update.message.reply_text(i)
+        # update.message.reply_text(i)
+        time.sleep(15)
         if name == i["name"]:
             update.message.reply_text(
                 f"Hello {name} Enter Your Pass:"
             )
+            time.delay(15)
             passw = update.message.text
             if(passw == i["pass"]):
                 creator = True
+            break
         else:
             update.message.reply_text(
-                "You are not a Creator!!"
-        
-    )
+                "You are not a Creator!!")
+    # update.message.reply_text(creator)
+            
 
 
 def unknown(update: Update, context: CallbackContext) -> None:
