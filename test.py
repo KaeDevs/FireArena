@@ -204,6 +204,11 @@ def creator_mode(update: Update, context: CallbackContext) -> None:
             passw = update.message.text
             if(passw == i["pass"]):
                 creator = True
+        else:
+            update.message.reply_text(
+                "You are not a Creator!!"
+        
+    )
 
 
 def unknown(update: Update, context: CallbackContext) -> None:
