@@ -197,6 +197,7 @@ def creator_mode(update: Update, context: CallbackContext) -> None:
     name = update.message.text
     crereq = requests.get(url=creURL)['record']
     for i in crereq:
+        update.message.reply_text(i)
         if name == i["name"]:
             update.message.reply_text(
                 f"Hello {name} Enter Your Pass:"
