@@ -1,26 +1,50 @@
-from pymongo import MongoClient
 
-# Connect to MongoDB
-client = MongoClient("mongodb+srv://mkavin2005:hqr5SqhrHI3diFn1@fireplay.dkbtt.mongodb.net/?retryWrites=true&w=majority&appName=FirePlay",  ssl=True, tls=True, tlsAllowInvalidCertificates=False)
-db = client["FirePlay"]
+# https://api.jsonbin.io/v3/b/6790d3f4ad19ca34f8f28613
 
-# Example teams
-team1 = {
-    "team_id": "team_001",
-    "team_name": "Team Alpha",
-    "players": ["Player1", "Player2", "Player3", "Player4"],
-    "registration_status": "completed"
+import requests
+
+URL = "https://api.jsonbin.io/v3/b/6790d61ee41b4d34e47ccfc4"
+response = requests.get(URL)
+
+new_data = {
+    "user_id": 67890,
+    "username": "newuser",
+    "team_name": "teamB",
+    "player1": "Player Alpha",
+    "player2": "Player Beta"
+}
+headers = {
+    "Content-Type": "application/json",
+    "X-Master-Key": "$2a$10$zCxD0eePhaxSpav1iZtzzO41se.8HoND.wMVD5IYqeQpGX3QqYfai"
 }
 
-team2 = {
-    "team_id": "team_002",
-    "team_name": "Team Beta",
-    "players": ["Player5", "Player6", "Player7", "Player8"],
-    "registration_status": "completed"
+# Step 1: Get current data
+response = requests.get(URL, headers=headers)
+if response.status_code == 200:
+    # Get the list directly
+    current_data = response.json()['record']  # Accessing the data directly under 'record'
+    print("Current data:", current_data)
+else:
+    print(f"Error fetching data: {response.status_code}")
+    exit()
+
+# Step 2: Define new player data to append
+new_player_data = {
+    "user_id": 67993,
+    "username": "kavinm",
+    "team_name": "team2",
+    "player1": "Player 1a",
+    "player2": "Player 2b"
 }
 
-# Insert teams into the collection
-db.teams.insert_one(team1)
-db.teams.insert_one(team2)
+# # Step 3: Append new player data
+current_data.append(new_player_data)
 
-print("Teams added successfully!")
+print(current_data)
+
+# # Step 4: Send the PUT request to update data
+response = requests.put(URL, headers=headers, json= current_data) 
+if response.status_code == 200:
+    print("Data updated successfully!")
+else:
+    print(f"Error: {response.status_code}")
