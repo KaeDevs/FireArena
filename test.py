@@ -200,16 +200,16 @@ def creator_mode(update: Update, context: CallbackContext) -> None:
     crereq = requests.get(url=creURL, headers= headers).json()['record']
     for i in crereq:
         # update.message.reply_text(i)
-        time.sleep(15)
+        # time.sleep(15)
         if name == i["name"]:
             update.message.reply_text(
                 f"Hello {name} Enter Your Pass:"
             )
-            time.delay(15)
+            # time.delay(15)
             passw = update.message.text
             if(passw == i["pass"]):
                 creator = True
-            break
+            
         else:
             update.message.reply_text(
                 "You are not a Creator!!")
