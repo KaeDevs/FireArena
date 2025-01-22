@@ -5,8 +5,7 @@ import logging
 from pymongo import MongoClient, errors
 import telegram
 import requests
-import firebase_admin
-from firebase_admin import credentials, db
+
 
 # Flask app
 app = Flask(__name__)
@@ -20,11 +19,7 @@ headers = {
 }
 bot = Bot(token=BOT_TOKEN)
 
-cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-6bd508fa97.json")
-firebase_admin.initialize_app(cred ,
-                              {
-    'databaseURL': 'https://fireplay-99a60-default-rtdb.firebaseio.com/'  # Replace with your database URL
-})
+
 
 # Updater and Dispatcher
 updater = Updater(token=BOT_TOKEN, use_context=True)
