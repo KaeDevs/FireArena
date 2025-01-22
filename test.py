@@ -4,6 +4,7 @@ from flask import Flask, request
 import logging
 from pymongo import MongoClient, errors
 import telegram
+import requests
 import firebase_admin
 from firebase_admin import credentials, db
 
@@ -12,6 +13,11 @@ app = Flask(__name__)
 
 # Telegram Bot Token
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
+URL = "https://api.jsonbin.io/v3/b/6790d61ee41b4d34e47ccfc4"
+headers = {
+    "Content-Type": "application/json",
+    "X-Master-Key": "$2a$10$zCxD0eePhaxSpav1iZtzzO41se.8HoND.wMVD5IYqeQpGX3QqYfai"
+}
 bot = Bot(token=BOT_TOKEN)
 
 cred = credentials.Certificate("fireplay-99a60-firebase-adminsdk-fbsvc-6bd508fa97.json")
@@ -32,7 +38,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global Variables
-TOURNAMENT_REGISTRATIONS = {}  # Dictionary to store registrations
+TOURNAMENT_REGISTRATIONS = {
+    "username": "kavinm",
+    "id":"123temp",
+    "team_name": "team2",
+    "player1": "Player 1a",
+    "player2": "Player 2b",
+    "player3": "Player 2b",
+    "player4": "Player 2b",
+    "payment": "false"
+}  # Dictionary to store registrations
 
 # Conversation steps
 TEAM_NAME, PLAYER1, PLAYER2, PLAYER3, PLAYER4 = range(5)
@@ -49,76 +64,78 @@ def start(update: Update, context: CallbackContext) -> None:
         "For any issues, contact the admin through this bot."
     )
 
-def add_team_data(team_id, team_data):
-    ref = db.reference(f"teams/{team_id}")  # Structure: /teams/{team_id}
-    ref.set(team_data)  # Writes or overwrites the data
-
-def get_team_data(team_id):
-    ref = db.reference(f"teams/{team_id}")
-    return ref.get()  # Fetches the data for the given team ID
-def update_team_data(team_id, key, value):
-    ref = db.reference(f"teams/{team_id}")
-    ref.update({key: value})  # Updates only specific keys
-def delete_team_data(team_id):
-    ref = db.reference(f"teams/{team_id}")
-    ref.delete()  # Deletes the team data
 
 
 def register(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
-    chat_id = update.message.chat_id
+    # chat_id = update.message.chat_id
 
-    TOURNAMENT_REGISTRATIONS[chat_id] = {"user_id": user.id, "username": user.username}
+    TOURNAMENT_REGISTRATIONS["username"] =  user.username
     update.message.reply_text("Welcome! Please enter your team name.")
     return TEAM_NAME
 
 
 def get_team_name(update: Update, context: CallbackContext) -> int:
-    chat_id = update.message.chat_id
-    TOURNAMENT_REGISTRATIONS[chat_id]["team_name"] = update.message.text
+    # chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS["team_name"] = update.message.text
     update.message.reply_text("Enter Player 1's username:")
     return PLAYER1
 
 
 def get_player1(update: Update, context: CallbackContext) -> int:
-    chat_id = update.message.chat_id
-    TOURNAMENT_REGISTRATIONS[chat_id]["player1"] = update.message.text
+    # chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS["player1"] = update.message.text
     update.message.reply_text("Enter Player 2's username:")
     return PLAYER2
 
 
 def get_player2(update: Update, context: CallbackContext) -> int:
-    chat_id = update.message.chat_id
-    TOURNAMENT_REGISTRATIONS[chat_id]["player2"] = update.message.text
+    # chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS["player2"] = update.message.text
     update.message.reply_text("Enter Player 3's username:")
     return PLAYER3
 
 
 def get_player3(update: Update, context: CallbackContext) -> int:
-    chat_id = update.message.chat_id
-    TOURNAMENT_REGISTRATIONS[chat_id]["player3"] = update.message.text
+    # chat_id = update.message.chat_id
+    TOURNAMENT_REGISTRATIONS["player3"] = update.message.text
     update.message.reply_text("Enter Player 4's username:")
     return PLAYER4
 
 
 def get_player4(update: Update, context: CallbackContext) -> int:
     chat_id = update.message.chat_id
-    user_data = TOURNAMENT_REGISTRATIONS[chat_id]
-    user_data["player4"] = update.message.text
+    TOURNAMENT_REGISTRATIONS["player4"] = update.message.text
+    TOURNAMENT_REGISTRATIONS["id"] = chat_id
+    user_data = TOURNAMENT_REGISTRATIONS
 
-    # Debugging: Print the data to be inserted into MongoDB
+    
     logger.info(f"Data to insert: {user_data}")
 
-    # Attempt to save data to MongoDB
+    
     try:
-        # Save data to Firebase
+        
         team_id = f"team_{chat_id}"  # Unique ID for the team
-        add_team_data(team_id, user_data)
+        response = requests.get(URL, headers=headers)
+        if response.status_code == 200:
+    
+            current_data = response.json()['record'] 
+            # print("Current data:", current_data)
+            current_data.append(user_data)
+
+            response1 = requests.put(URL, headers=headers, json= current_data) 
+            if response1.status_code == 200:
+                print("Data updated successfully!")
+            else:
+                print(f"Error: {response.status_code}")
+        else:
+            print(f"Error fetching data: {response.status_code}")
+            
         update.message.reply_text(
             "Team registration complete! Data saved to the cloud. Use /schedule to view matches or /payment to complete registration."
         )
     except Exception as e:
-        logger.error(f"Error saving to Firebase: {e}")
+        logger.error(f"Error saving to json File {e}")
         update.message.reply_text("An error occurred while saving your registration. Please try again.")
 
     return ConversationHandler.END
