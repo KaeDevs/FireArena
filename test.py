@@ -9,10 +9,11 @@ import requests
 
 # Flask app
 app = Flask(__name__)
-
+creator = False
 # Telegram Bot Token
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 URL = "https://api.jsonbin.io/v3/b/6790d61ee41b4d34e47ccfc4"
+creURL = "https://api.jsonbin.io/v3/b/6790e619acd3cb34a8d10fca"
 headers = {
     "Content-Type": "application/json",
     "X-Master-Key": "$2a$10$zCxD0eePhaxSpav1iZtzzO41se.8HoND.wMVD5IYqeQpGX3QqYfai"
@@ -32,7 +33,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Global Variables
+
 TOURNAMENT_REGISTRATIONS = {
     "username": "kavinm",
     "id":"123temp",
@@ -188,6 +189,23 @@ def info(update: Update, context: CallbackContext) -> None:
         "Good luck to all participants!"
     )
 
+def creator_mode(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(
+        "Creator Information:\n"
+        "Enter Login Credentials...\n" 
+    )
+    name = update.message.text
+    crereq = requests.get(url=creURL)['record']
+    for i in crereq:
+        if name == i["name"]:
+            update.message.reply_text(
+                f"Hello {name} Enter Your Pass:"
+            )
+            passw = update.message.text
+            if(passw == i["pass"]):
+                creator = True
+
+
 def unknown(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Sorry, I didn't understand that command.")
 
@@ -213,6 +231,7 @@ dispatcher.add_handler(CommandHandler("register", register))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
 dispatcher.add_handler(CommandHandler("info", info)) 
+dispatcher.add_handler(CommandHandler("creatormode", creator_mode)) 
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
