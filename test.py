@@ -195,9 +195,14 @@ def schedule(update: Update, context: CallbackContext) -> None:
     # Step 5: Send the reply
     update.message.reply_text(reply_message)
 def clearmatch(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(
-        "Matches Cleared\n"
-    )
+    if(creator == True):
+        matURL = "https://api.jsonbin.io/v3/b/6790fa0bad19ca34f8f295be"
+        matreq = requests.put(url= matURL, headers= headers, json = {"round_1": [],
+  "round_2": [],
+  "left_out_team": None})
+        update.message.reply_text(
+            "Matches Cleared\n"
+        )
 
 def rules(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
