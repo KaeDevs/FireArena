@@ -226,7 +226,7 @@ def clearregisters(update: Update, context: CallbackContext) -> None:
     if(TOURNAMENT_REGISTRATIONS["creator"] == True):
         
         req = requests.put(url= URL, headers= headers, json = [{}])
-        req2 = requests.put(url= idURL, headers= headers, json = {"ids" : []})
+        req2 = requests.put(url= idURL, headers= headers, json = {"ids" : [], "rc" : []})
          
         update.message.reply_text(
             "Players Registrations Cleared\n"
@@ -333,7 +333,8 @@ rc_Handler = ConversationHandler(
     entry_points=[CommandHandler("ihaverc", ihaverc)],
     states={
         ENTER_RC: [MessageHandler(Filters.text & ~Filters.command, enter_rc)],
-    }
+    },
+    fallbacks=[CommandHandler("cancel", cancel_creator_mode)],
 )
 
 def unknown(update: Update, context: CallbackContext) -> None:
@@ -356,6 +357,7 @@ conversation_handler = ConversationHandler(
 # Register Handlers
 dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(creator_mode_handler)
+dispatcher.add_handler(rc_Handler)
 dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("register", register))
