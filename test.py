@@ -367,6 +367,7 @@ dispatcher.add_handler(CommandHandler("clearregisters", clearregisters))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
 dispatcher.add_handler(CommandHandler("info", info)) 
 dispatcher.add_handler(CommandHandler("creatormode", start_creator_mode)) 
+dispatcher.add_handler(CommandHandler("ihaverc", ihaverc)) 
 dispatcher.add_handler(CommandHandler("nocreatormode", cancel_creator_mode)) 
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
