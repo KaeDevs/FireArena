@@ -16,6 +16,7 @@ creator = False
 # Telegram Bot Token
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 URL = "https://api.jsonbin.io/v3/b/6790d61ee41b4d34e47ccfc4"
+matURL = "https://api.jsonbin.io/v3/b/6790fa0bad19ca34f8f295be"
 creURL = "https://api.jsonbin.io/v3/b/6790e619acd3cb34a8d10fca"
 headers = {
     "Content-Type": "application/json",
@@ -46,7 +47,8 @@ TOURNAMENT_REGISTRATIONS = {
     "player3": "Player 2b",
     "player4": "Player 2b",
     "payment": "false",
-    "roomid" : "ag123"
+    "roomid" : "ag123",
+    "creator" : False
 }  # Dictionary to store registrations
 
 # Conversation steps
@@ -163,6 +165,7 @@ def payment(update: Update, context: CallbackContext) -> None:
 
 
 def schedule(update: Update, context: CallbackContext) -> None:
+
     from totest import fetch_tournament_data, process_tournament 
 
     # Step 1: Process the tournament to update data
@@ -194,15 +197,19 @@ def schedule(update: Update, context: CallbackContext) -> None:
 
     # Step 5: Send the reply
     update.message.reply_text(reply_message)
+
+
 def clearmatch(update: Update, context: CallbackContext) -> None:
-    if(creator == True):
-        matURL = "https://api.jsonbin.io/v3/b/6790fa0bad19ca34f8f295be"
+    if(TOURNAMENT_REGISTRATIONS["creator"] == True):
+        
         matreq = requests.put(url= matURL, headers= headers, json = {"round_1": [],
   "round_2": [],
   "left_out_team": None})
         update.message.reply_text(
             "Matches Cleared\n"
         )
+    else:
+
 
 def rules(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
@@ -260,6 +267,7 @@ def enter_password(update: Update, context: CallbackContext) -> int:
         if creator_name == creator["name"] and creator_password == creator["pass"]:
             update.message.reply_text(f"Welcome, {creator_name}! You are now in creator mode.")
             creator = True
+            TOURNAMENT_REGISTRATIONS["creator"] = True
             return ConversationHandler.END
 
     # If credentials are invalid
@@ -269,7 +277,7 @@ def enter_password(update: Update, context: CallbackContext) -> int:
 # Function to handle cancellation
 def cancel_creator_mode(update: Update, context: CallbackContext) -> int:
     """Cancel the creator mode process."""
-    creator = False
+    TOURNAMENT_REGISTRATIONS["creator"] = False
     update.message.reply_text("Creator mode canceled.")
     return ConversationHandler.END
 
