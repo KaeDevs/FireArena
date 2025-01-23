@@ -169,7 +169,8 @@ def schedule(update: Update, context: CallbackContext) -> None:
     from totest import fetch_tournament_data, process_tournament 
 
     # Step 1: Process the tournament to update data
-    process_tournament()
+    if(TOURNAMENT_REGISTRATIONS["creator"] == True):
+        process_tournament()
 
     # Step 2: Fetch updated tournament data
     tournament_data = fetch_tournament_data()
