@@ -223,34 +223,58 @@ def info(update: Update, context: CallbackContext) -> None:
         "Good luck to all participants!"
     )
 
-def creator_mode(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(
-        "Creator Information:\n"
-        "Enter Login Credentials...\n" 
-    )
-    cr_name = update.message.text
-    return cr_name
-    
-    # update.message.reply_text(creator)
-            
-def Check_creator_mode(update: Update, context: CallbackContext) -> None:
-    n = creator_mode
-    crereq = requests.get(url=creURL, headers= headers).json()['record']
-    for i in crereq:
-        # update.message.reply_text(i)
-        # time.sleep(15)
-        if n == i["name"]:
-            update.message.reply_text(
-                f"Hello {name} Enter Your Pass:"
-            )
-            # time.delay(15)
-            passw = update.message.text
-            if(passw == i["pass"]):
-                creator = True
-            
-        else:
-            update.message.reply_text(
-                "You are not a Creator!!")
+ENTER_NAME, ENTER_PASS = range(2)
+
+# Function to start the creator mode process
+def start_creator_mode(update: Update, context: CallbackContext) -> int:
+    """Start the creator mode conversation."""
+    update.message.reply_text("Creator Information:\nPlease enter your creator name:")
+    return ENTER_NAME
+
+# Function to handle the name input
+def enter_name(update: Update, context: CallbackContext) -> int:
+    """Handle creator name input."""
+    context.user_data['name'] = update.message.text
+    update.message.reply_text("Thank you! Now, please enter your password:")
+    return ENTER_PASS
+
+# Function to handle the password input and validate
+def enter_password(update: Update, context: CallbackContext) -> int:
+    """Validate creator credentials."""
+    creator_name = context.user_data['name']
+    creator_password = update.message.text
+
+    # Fetch creator credentials
+    response = requests.get(url=creURL, headers=headers)
+    if response.status_code != 200:
+        update.message.reply_text("Error fetching creator data. Please try again later.")
+        return ConversationHandler.END
+
+    creator_data = response.json().get('record', [])
+    for creator in creator_data:
+        if creator_name == creator["name"] and creator_password == creator["pass"]:
+            update.message.reply_text(f"Welcome, {creator_name}! You are now in creator mode.")
+            return ConversationHandler.END
+
+    # If credentials are invalid
+    update.message.reply_text("Invalid credentials. You are not a Creator.")
+    return ConversationHandler.END
+
+# Function to handle cancellation
+def cancel_creator_mode(update: Update, context: CallbackContext) -> int:
+    """Cancel the creator mode process."""
+    update.message.reply_text("Creator mode canceled.")
+    return ConversationHandler.END
+
+# Define a new ConversationHandler for creator mode
+creator_mode_handler = ConversationHandler(
+    entry_points=[CommandHandler("creatormode", start_creator_mode)],
+    states={
+        ENTER_NAME: [MessageHandler(Filters.text & ~Filters.command, enter_name)],
+        ENTER_PASS: [MessageHandler(Filters.text & ~Filters.command, enter_password)],
+    },
+    fallbacks=[CommandHandler("cancel", cancel_creator_mode)],
+)
 
 def unknown(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Sorry, I didn't understand that command.")
@@ -271,6 +295,7 @@ conversation_handler = ConversationHandler(
 
 # Register Handlers
 dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(creator_mode_handler)
 dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("register", register))
