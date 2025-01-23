@@ -209,6 +209,9 @@ def clearmatch(update: Update, context: CallbackContext) -> None:
             "Matches Cleared\n"
         )
     else:
+        update.message.reply_text(
+            "Players cannot clear matches\n"
+        )
 
 
 def rules(update: Update, context: CallbackContext) -> None:
