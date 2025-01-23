@@ -16,6 +16,7 @@ creator = False
 # Telegram Bot Token
 BOT_TOKEN = "7592940575:AAFtJnf4DqUeKtVdfmPx_d4wqbf3lwYOlCM"
 URL = "https://api.jsonbin.io/v3/b/6790d61ee41b4d34e47ccfc4"
+idURL = "https://api.jsonbin.io/v3/b/679255e6e41b4d34e47d86da"
 matURL = "https://api.jsonbin.io/v3/b/6790fa0bad19ca34f8f295be"
 creURL = "https://api.jsonbin.io/v3/b/6790e619acd3cb34a8d10fca"
 headers = {
@@ -120,6 +121,7 @@ def get_player4(update: Update, context: CallbackContext) -> int:
         
         team_id = f"team_{chat_id}"  # Unique ID for the team
         response = requests.get(URL, headers=headers)
+        responseof2 = requests.get(idURL, headers=headers).json()["record"]["ids"]
         if response.status_code == 200:
     
             current_data = response.json()['record'] 
@@ -127,6 +129,7 @@ def get_player4(update: Update, context: CallbackContext) -> int:
             current_data.append(user_data)
 
             response1 = requests.put(URL, headers=headers, json= current_data) 
+            response2 = requests.put(idURL, headers= headers, json = {"ids": responseof2.append(chat_id)})
             if response1.status_code == 200:
                 print("Data updated successfully!")
             else:
