@@ -311,7 +311,7 @@ dispatcher.add_handler(CommandHandler("clearmatch", clearmatch))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
 dispatcher.add_handler(CommandHandler("info", info)) 
 dispatcher.add_handler(CommandHandler("creatormode", start_creator_mode)) 
-dispatcher.add_handler(CommandHandler("!creatormode", cancel_creator_mode)) 
+dispatcher.add_handler(CommandHandler("nocreatormode", cancel_creator_mode)) 
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
