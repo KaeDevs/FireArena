@@ -58,11 +58,11 @@ TEAM_NAME, PLAYER1, PLAYER2, PLAYER3, PLAYER4 = range(5)
 def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
         "Welcome to the Free Fire Tournament Bot!\n"
+        "Use /info to understand the process in detail.\n"
+        "Use /rules to view the match rules.\n"
         "Use /register to register your team or yourself for the tournament.\n"
         "Use /schedule to view upcoming matches.\n"
-        "Use /payment to complete your registration fee.\n"
-        "Use /rules to view the match rules.\n"
-        "Use /info to understand the process in detail.\n"
+        "Use /payment to complete your registration fee.\n" 
         "For any issues, contact the admin through this bot."
     )
 
