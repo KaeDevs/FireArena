@@ -311,12 +311,19 @@ def cancel_creator_mode(update: Update, context: CallbackContext) -> int:
 def ihaverc(update: Update, context: CallbackContext) -> int:
     """Cancel the creator mode process."""
     if(TOURNAMENT_REGISTRATIONS["creator"] == True):
-        update.message.reply_text("Enter The Room Id.\nI will assign it to the appropriate TEAMs!")
-    return ENTER_RC
+        update.message.reply_text("Enter The Room Id."
+                                  "\nI will assign it to the appropriate TEAMs!")
+        return ENTER_RC
+    else:
+        update.message.reply_text("You Have To Become A Creator To Conduct Matches")
 
 def enter_rc(update: Update, context: CallbackContext) -> int:
     
     RC = update.message.text
+    upreq = requests.get(idURL, headers= headers).json()["record"]
+    upreq["rc"].append(RC)
+    upreq2 = requests.put(idURL, headers= headers, json = upreq)
+    
     update.message.reply_text("Thank you! I will add it to a team./nClick on /schedule to view the Schedule!")
     return ConversationHandler.END
 # Define a new ConversationHandler for creator mode
