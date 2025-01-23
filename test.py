@@ -71,8 +71,11 @@ def start(update: Update, context: CallbackContext) -> None:
 
 def register(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
-    # chat_id = update.message.chat_id
-
+    chat_id = update.message.chat_id
+    rescheck = requests.get(idURL, headers= headers).json()["record"]["ids"]
+    if(chat_id in rescheck):
+        update.message.reply_text("You Have Already Registered Using this account. Try Clearing your registration to Register Again.\n Take Care of payments before clearing your registration once unregistered you may lose your registration fee!!")
+        return ConversationHandler.END
     TOURNAMENT_REGISTRATIONS["username"] =  user.username
     update.message.reply_text("Welcome! Please enter your team name.")
     return TEAM_NAME
