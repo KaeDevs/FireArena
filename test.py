@@ -262,6 +262,7 @@ def info(update: Update, context: CallbackContext) -> None:
     )
 
 ENTER_NAME, ENTER_PASS = range(2)
+ENTER_RC = range(1)
 
 # Function to start the creator mode process
 def start_creator_mode(update: Update, context: CallbackContext) -> int:
@@ -307,6 +308,17 @@ def cancel_creator_mode(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Creator mode canceled.")
     return ConversationHandler.END
 
+def ihaverc(update: Update, context: CallbackContext) -> int:
+    """Cancel the creator mode process."""
+    if(TOURNAMENT_REGISTRATIONS["creator"] == True):
+        update.message.reply_text("Enter The Room Id.\nI will assign it to the appropriate TEAMs!")
+    return ENTER_RC
+
+def enter_rc(update: Update, context: CallbackContext) -> int:
+    
+    RC = update.message.text
+    update.message.reply_text("Thank you! I will add it to a team./nClick on /schedule to view the Schedule!")
+    return ConversationHandler.END
 # Define a new ConversationHandler for creator mode
 creator_mode_handler = ConversationHandler(
     entry_points=[CommandHandler("creatormode", start_creator_mode)],
@@ -315,6 +327,13 @@ creator_mode_handler = ConversationHandler(
         ENTER_PASS: [MessageHandler(Filters.text & ~Filters.command, enter_password)],
     },
     fallbacks=[CommandHandler("cancel", cancel_creator_mode)],
+)
+
+rc_Handler = ConversationHandler(
+    entry_points=[CommandHandler("ihaverc", ihaverc)],
+    states={
+        ENTER_RC: [MessageHandler(Filters.text & ~Filters.command, enter_rc)],
+    }
 )
 
 def unknown(update: Update, context: CallbackContext) -> None:
