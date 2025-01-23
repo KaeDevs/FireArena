@@ -23,7 +23,7 @@ headers = {
 }
 bot = Bot(token=BOT_TOKEN)
 
-
+cr_name = ""
 
 # Updater and Dispatcher
 updater = Updater(token=BOT_TOKEN, use_context=True)
@@ -101,6 +101,7 @@ def get_player3(update: Update, context: CallbackContext) -> int:
     TOURNAMENT_REGISTRATIONS["player3"] = update.message.text
     update.message.reply_text("Enter Player 4's username:")
     return PLAYER4
+
 
 
 def get_player4(update: Update, context: CallbackContext) -> int:
@@ -227,12 +228,18 @@ def creator_mode(update: Update, context: CallbackContext) -> None:
         "Creator Information:\n"
         "Enter Login Credentials...\n" 
     )
-    name = update.message.text
+    cr_name = update.message.text
+    return cr_name
+    
+    # update.message.reply_text(creator)
+            
+def Check_creator_mode(update: Update, context: CallbackContext) -> None:
+    n = creator_mode
     crereq = requests.get(url=creURL, headers= headers).json()['record']
     for i in crereq:
         # update.message.reply_text(i)
         # time.sleep(15)
-        if name == i["name"]:
+        if n == i["name"]:
             update.message.reply_text(
                 f"Hello {name} Enter Your Pass:"
             )
@@ -244,9 +251,6 @@ def creator_mode(update: Update, context: CallbackContext) -> None:
         else:
             update.message.reply_text(
                 "You are not a Creator!!")
-    # update.message.reply_text(creator)
-            
-
 
 def unknown(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Sorry, I didn't understand that command.")
