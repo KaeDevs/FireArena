@@ -162,13 +162,37 @@ def payment(update: Update, context: CallbackContext) -> None:
 
 
 def schedule(update: Update, context: CallbackContext) -> None:
-    totest.process_tournament()
-    update.message.reply_text(
-        "Upcoming Matches:\n"
-        "1. Match 1: Jan 15, 6 PM (Room Code: XYZ123)\n"
-        "2. Match 2: Jan 16, 6 PM (Room Code: ABC456)\n"
-        "Stay tuned for more updates!"
-    )
+    from totest import fetch_tournament_data, process_tournament 
+
+    # Step 1: Process the tournament to update data
+    process_tournament()
+
+    # Step 2: Fetch updated tournament data
+    tournament_data = fetch_tournament_data()
+    if not tournament_data:
+        update.message.reply_text("Error fetching tournament data.")
+        return
+
+    # Step 3: Find the latest round with matches
+    latest_round = None
+    for round_number in sorted(tournament_data.keys()):
+        if round_number.startswith("round_") and isinstance(tournament_data[round_number], list):
+            if tournament_data[round_number]:  # Check if matches exist in this round
+                latest_round = round_number
+
+    # Step 4: Prepare the reply
+    if latest_round:
+        matches = tournament_data[latest_round]
+        match_details = "\n".join([
+            f"Match {match['match_id']}: {match['team1']} vs {match['team2']} at {match['scheduled_time']} (Room: {match['match_room_id']})"
+            for match in matches
+        ])
+        reply_message = f"Upcoming Matches for {latest_round.capitalize()}:\n\n{match_details}"
+    else:
+        reply_message = "No matches are scheduled at the moment."
+
+    # Step 5: Send the reply
+    update.message.reply_text(reply_message)
 def clearmatch(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
         "Matches Cleared\n"
