@@ -226,6 +226,8 @@ def clearregisters(update: Update, context: CallbackContext) -> None:
     if(TOURNAMENT_REGISTRATIONS["creator"] == True):
         
         req = requests.put(url= URL, headers= headers, json = [{}])
+        req2 = requests.put(url= idURL, headers= headers, json = {"ids" : []})
+         
         update.message.reply_text(
             "Players Registrations Cleared\n"
         )
