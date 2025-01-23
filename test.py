@@ -254,6 +254,7 @@ def enter_password(update: Update, context: CallbackContext) -> int:
     for creator in creator_data:
         if creator_name == creator["name"] and creator_password == creator["pass"]:
             update.message.reply_text(f"Welcome, {creator_name}! You are now in creator mode.")
+            creator = True
             return ConversationHandler.END
 
     # If credentials are invalid
@@ -263,6 +264,7 @@ def enter_password(update: Update, context: CallbackContext) -> int:
 # Function to handle cancellation
 def cancel_creator_mode(update: Update, context: CallbackContext) -> int:
     """Cancel the creator mode process."""
+    creator = False
     update.message.reply_text("Creator mode canceled.")
     return ConversationHandler.END
 
@@ -304,6 +306,7 @@ dispatcher.add_handler(CommandHandler("clearmatch", clearmatch))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
 dispatcher.add_handler(CommandHandler("info", info)) 
 dispatcher.add_handler(CommandHandler("creatormode", start_creator_mode)) 
+dispatcher.add_handler(CommandHandler("!creatormode", cancel_creator_mode)) 
 dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 # Flask Webhook Route
