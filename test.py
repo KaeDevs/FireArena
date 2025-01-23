@@ -214,6 +214,19 @@ def clearmatch(update: Update, context: CallbackContext) -> None:
         )
 
 
+def clearregisters(update: Update, context: CallbackContext) -> None:
+    if(TOURNAMENT_REGISTRATIONS["creator"] == True):
+        
+        req = requests.put(url= URL, headers= headers, json = [{}])
+        update.message.reply_text(
+            "Players Registrations Cleared\n"
+        )
+    else:
+        update.message.reply_text(
+            "Players cannot clear registrations\n"
+        )
+
+
 def rules(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
         "Tournament Rules:\n"
@@ -319,6 +332,7 @@ dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("register", register))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
 dispatcher.add_handler(CommandHandler("clearmatch", clearmatch))
+dispatcher.add_handler(CommandHandler("clearregisters", clearregisters))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
 dispatcher.add_handler(CommandHandler("info", info)) 
 dispatcher.add_handler(CommandHandler("creatormode", start_creator_mode)) 
