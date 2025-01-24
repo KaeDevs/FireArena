@@ -246,8 +246,14 @@ def rules(update: Update, context: CallbackContext) -> None:
         "4. The team leader is responsible for communication and ensuring all players are registered.\n"
         "5. Players must be available at the scheduled match time.\n"
         "6. The winner will be decided based on in-game performance and team coordination.\n"
-        "For any clarifications, please reach out to the admin."
-    )
+        "7. player should not break a gloowall\n"
+        "8. player are restricted to go to the top of building\n"
+        "9. gerenade and other throughble items are not allowed\n"
+        "10. player should face the enemies face to face , hide and back attacks are not allowed\n"
+        "11. creator does not take responsibility for network ,lag and other issue\n"
+        "12. Any case of Overriding RULES will result in disqualification.\n"
+        "For any clarifications, please reach out to the admin.\n"       
+            )
 
 
 def info(update: Update, context: CallbackContext) -> None:
