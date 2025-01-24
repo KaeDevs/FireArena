@@ -70,8 +70,47 @@ def get_teams_data():
         print(f"Error fetching teams data: {response.status_code}")
         return None
 
+idURL = "https://api.jsonbin.io/v3/b/679255e6e41b4d34e47d86da"
+
+# Function to assign a room card to a match
+def assign_rc(matches):
+    """
+    Assign a room card to the first match that doesn't already have one.
+    """
+    # Fetch the room card data
+    response = requests.get(idURL, headers=headers)
+    if response.status_code != 200:
+        print("Error fetching room card data.")
+        return False
+
+    upreq = response.json().get("record", {})
+    if not upreq.get("rc"):
+        print("No room cards available.")
+        return False
+
+    # Pop the first available room card
+    ele = upreq["rc"].pop(0)
+
+    # Assign the room card to the first match without one
+    for match in matches:
+        if "room_card" not in match:  # Only assign if 'room_card' is not already present
+            match["room_card"] = ele
+            print(f"Assigned room card {ele} to match {match['match_id']}.")
+            break
+
+    # Update the room card list back to the server
+    update_response = requests.put(idURL, headers=headers, json=upreq)
+    if update_response.status_code != 200:
+        print("Error updating room card data.")
+        return False
+
+    return True
+
 # Function to schedule matches for a round
 def schedule_matches(teams, round_number):
+    """
+    Schedules matches for a given round and assigns room cards if available.
+    """
     random.shuffle(teams)
     current_time = datetime.now()
     matches = []
@@ -86,7 +125,9 @@ def schedule_matches(teams, round_number):
             "round": round_number,
             "match_id": match_id,
             "team1": teams[i]['team_name'],
+            "team1_id": teams[i]['id'],
             "team2": teams[i + 1]['team_name'],
+            "team2_id": teams[i + 1]['id'],
             "match_room_id": f"room_{round_number}_{match_id}",
             "scheduled_time": (current_time + timedelta(hours=match_id * 2)).strftime('%Y-%m-%d %H:%M:%S'),
             "winner": None
@@ -94,7 +135,11 @@ def schedule_matches(teams, round_number):
         matches.append(match_details)
         match_id += 1
 
+    # Assign a room card to one match if available
+    assign_rc(matches)
+
     return matches, left_out_team
+
 
 # Function to save tournament data
 def save_tournament_data(tournament_data):
