@@ -126,20 +126,20 @@ def my_match( update: Update, context: CallbackContext) -> None:
                 if match.get("team1_id") == team_id or match.get("team2_id") == team_id:
                     found_match = True
                     # Display match details
-                    room_card = match.get("room_card", "No room card assigned")
-                    update.message.reply_text(f"Match Found in {round_key}:"
-                    f"Match ID: {match['match_id']}"
-                    f"Team 1: {match['team1']} (ID: {match['team1_id']})"
-                    f"Team 2: {match['team2']} (ID: {match['team2_id']})"
-                    f"Match Room ID: {match['match_room_id']}"
-                    f"Scheduled Time: {match['scheduled_time']}"
+                    room_card = match.get("room_card", "No room card assigned \n Wait for the creator to create a room card")
+                    update.message.reply_text(f"\nMatch Found in {round_key}:"
+                    f"\nMatch ID: {match['match_id']}"
+                    f"\nTeam 1: {match['team1']} "
+                    f"\nTeam 2: {match['team2']} "
+                    # f"Match Room ID: {match['match_room_id']}"
+                    f"\nScheduled Time: {match['scheduled_time']}"
                     
-                    f"Room Card: {room_card}\n")
+                    f"\nRoom Card: {room_card}\n")
                         
 
 
     if not found_match:
-        update.message.reply_text(f"No matches found for Team ID: {team_id}, Wait For the creator to create a match."
+        update.message.reply_text(f"No matches found for Team ID: {team_id}"
                                   "\nWatch the Telegram group very closely for your turn and schedules")
 
 def get_player4(update: Update, context: CallbackContext) -> int:
