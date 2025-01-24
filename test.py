@@ -115,13 +115,14 @@ def my_match( update: Update, context: CallbackContext) -> None:
         print("Error fetching match data.")
         return None
 
-    matches_data = response.json()
+    matches_data = response.json()["record"]
     found_match = False
 
     # Iterate over all rounds and matches to find the team
     for round_key, matches in matches_data.items():
         if round_key.startswith("round_"):
             for match in matches:
+                print(match)
                 if match.get("team1_id") == team_id or match.get("team2_id") == team_id:
                     found_match = True
                     # Display match details
