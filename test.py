@@ -325,7 +325,7 @@ def ihaverc(update: Update, context: CallbackContext) -> int:
 
 def enter_rc(update: Update, context: CallbackContext) -> int:
     
-    RC = update.message.text
+    RC = int(update.message.text)
     upreq = requests.get(idURL, headers= headers).json()["record"]
     upreq["rc"].append(RC)
     upreq2 = requests.put(idURL, headers= headers, json = upreq)
