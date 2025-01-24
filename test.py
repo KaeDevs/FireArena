@@ -108,7 +108,38 @@ def get_player3(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Enter Player 4's username:")
     return PLAYER4
 
+def my_match( update: Update, context: CallbackContext) -> None:
+    team_id = update.message.chat_id
+    response = requests.get(matURL, headers=headers)
+    if response.status_code != 200:
+        print("Error fetching match data.")
+        return None
 
+    matches_data = response.json()
+    found_match = False
+
+    # Iterate over all rounds and matches to find the team
+    for round_key, matches in matches_data.items():
+        if round_key.startswith("round_"):
+            for match in matches:
+                if match.get("team1_id") == team_id or match.get("team2_id") == team_id:
+                    found_match = True
+                    # Display match details
+                    room_card = match.get("room_card", "No room card assigned")
+                    update.message.reply_text(f"Match Found in {round_key}:"
+                    f"Match ID: {match['match_id']}"
+                    f"Team 1: {match['team1']} (ID: {match['team1_id']})"
+                    f"Team 2: {match['team2']} (ID: {match['team2_id']})"
+                    f"Match Room ID: {match['match_room_id']}"
+                    f"Scheduled Time: {match['scheduled_time']}"
+                    
+                    f"Room Card: {room_card}\n")
+                        
+
+
+    if not found_match:
+        update.message.reply_text(f"No matches found for Team ID: {team_id}, Wait For the creator to create a match."
+                                  "\nWatch the Telegram group very closely for your turn and schedules")
 
 def get_player4(update: Update, context: CallbackContext) -> int:
     chat_id = update.message.chat_id
@@ -377,6 +408,7 @@ dispatcher.add_handler(rc_Handler)
 dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("register", register))
+dispatcher.add_handler(CommandHandler("mymatch", my_match))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
 dispatcher.add_handler(CommandHandler("clearmatch", clearmatch))
 dispatcher.add_handler(CommandHandler("clearregisters", clearregisters))

@@ -119,18 +119,19 @@ def schedule_matches(teams, round_number):
     if len(teams) % 2 != 0:
         left_out_team = teams.pop()
 
-    match_id = 1
+    
     for i in range(0, len(teams), 2):
         match_details = {
             "round": round_number,
-            "match_id": match_id,
+            
             "team1": teams[i]['team_name'],
             "team1_id": teams[i]['id'],
             "team2": teams[i + 1]['team_name'],
             "team2_id": teams[i + 1]['id'],
             "match_room_id": f"room_{round_number}_{match_id}",
             "scheduled_time": (current_time + timedelta(hours=match_id * 2)).strftime('%Y-%m-%d %H:%M:%S'),
-            "winner": None
+            "winner": None,
+            "room_card": None
         }
         matches.append(match_details)
         match_id += 1
