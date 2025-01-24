@@ -48,7 +48,7 @@ TOURNAMENT_REGISTRATIONS = {
     "player3": "Player 2b",
     "player4": "Player 2b",
     "payment": "false",
-    "roomid" : "ag123",
+    "roomid" : None,
     "creator" : False
 }  # Dictionary to store registrations
 
@@ -124,8 +124,11 @@ def get_player4(update: Update, context: CallbackContext) -> int:
         
         team_id = f"team_{chat_id}"  # Unique ID for the team
         response = requests.get(URL, headers=headers)
-        responseof2 = requests.get(idURL, headers=headers).json()["record"]["ids"]
-        responseof2.append(chat_id)
+        responseof2 = requests.get(idURL, headers=headers).json()["record"]
+        respids = response2["ids"]
+        respids.append(chat_id)
+        response2["ids"] = respids
+
         if response.status_code == 200:
     
             current_data = response.json()['record'] 
@@ -133,7 +136,7 @@ def get_player4(update: Update, context: CallbackContext) -> int:
             current_data.append(user_data)
 
             response1 = requests.put(URL, headers=headers, json= current_data) 
-            response2 = requests.put(idURL, headers= headers, json = {"ids": responseof2})
+            response2 = requests.put(idURL, headers= headers, json = response2)
             if response1.status_code == 200:
                 print("Data updated successfully!")
             else:
