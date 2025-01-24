@@ -125,9 +125,9 @@ def get_player4(update: Update, context: CallbackContext) -> int:
         team_id = f"team_{chat_id}"  # Unique ID for the team
         response = requests.get(URL, headers=headers)
         responseof2 = requests.get(idURL, headers=headers).json()["record"]
-        respids = response2["ids"]
+        respids = responseof2["ids"]
         respids.append(chat_id)
-        response2["ids"] = respids
+        responseof2["ids"] = respids
 
         if response.status_code == 200:
     
@@ -136,8 +136,8 @@ def get_player4(update: Update, context: CallbackContext) -> int:
             current_data.append(user_data)
 
             response1 = requests.put(URL, headers=headers, json= current_data) 
-            response2 = requests.put(idURL, headers= headers, json = response2)
-            if response1.status_code == 200:
+            response2 = requests.put(idURL, headers= headers, json = responseof2)
+            if response1.status_code == 200  & response2.status_code == 200:
                 print("Data updated successfully!")
             else:
                 print(f"Error: {response.status_code}")
