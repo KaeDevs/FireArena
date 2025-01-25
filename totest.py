@@ -76,84 +76,101 @@ idURL = "https://api.jsonbin.io/v3/b/679255e6e41b4d34e47d86da"
 import requests
 
 # Assign Room Cards to Scheduled Matches
+import logging
+import requests
+import random
+from datetime import datetime, timedelta
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+# Assign Room Cards to Already-Scheduled Matches
 def assign_rc():
     """
     Assign room cards to already-scheduled matches that don't have one.
     """
-    # Fetch room card data
+    logging.info("Fetching room card data...")
     rc_response = requests.get(idURL, headers=headers)
     if rc_response.status_code != 200:
-        print("Error fetching room card data.")
+        logging.error("Error fetching room card data. Status code: %d", rc_response.status_code)
         return False
 
     rc_data = rc_response.json().get("record", {})
+    logging.debug("Room card data fetched: %s", rc_data)
+
     if not rc_data.get("rc"):
-        print("No room cards available.")
+        logging.warning("No room cards available.")
         return False
 
-    # Fetch match data
+    logging.info("Fetching match data...")
     match_response = requests.get(matURL, headers=headers)
     if match_response.status_code != 200:
-        print("Error fetching match data.")
+        logging.error("Error fetching match data. Status code: %d", match_response.status_code)
         return False
 
     match_data = match_response.json()
+    logging.debug("Match data fetched: %s", match_data)
 
-    # Iterate through all rounds and assign room cards
     room_cards = rc_data["rc"]
+    logging.info("Assigning room cards to matches...")
     for round_key, matches in match_data.items():
-        if round_key.startswith("round_"):  # Process only round keys
+        if round_key.startswith("round_"):
             for match in matches:
-                if "room_card" not in match or match["room_card"] is None:  # Assign if no room card
+                if "room_card" not in match or match["room_card"] is None:
                     if not room_cards:
-                        print("No more room cards available.")
+                        logging.warning("No more room cards available.")
                         break
 
-                    # Pop the next available room card
                     room_card = room_cards.pop(0)
                     match["room_card"] = room_card
-                    print(f"Assigned room card {room_card} to match {match['match_id']} in {round_key}.")
+                    logging.info("Assigned room card %d to match %d in %s.", room_card, match["match_id"], round_key)
 
-    # Update the match data back to the server
+    logging.info("Updating match data...")
     match_update_response = requests.put(matURL, headers=headers, json=match_data)
     if match_update_response.status_code != 200:
-        print("Error updating match data.")
+        logging.error("Error updating match data. Status code: %d", match_update_response.status_code)
         return False
 
-    # Update the room card data back to the server
+    logging.info("Updating room card data...")
     rc_update_response = requests.put(idURL, headers=headers, json=rc_data)
     if rc_update_response.status_code != 200:
-        print("Error updating room card data.")
+        logging.error("Error updating room card data. Status code: %d", rc_update_response.status_code)
         return False
 
+    logging.info("Room card assignment completed successfully.")
     return True
 
+# Schedule Matches for a Round
 def schedule_matches(teams, round_number):
     """
     Schedules matches for a given round and assigns room cards if available.
     """
-    # Fetch existing matches (if any)
+    logging.info("Fetching existing match data...")
     response = requests.get(matURL, headers=headers)
     if response.status_code != 200:
-        print("Error fetching match data.")
+        logging.error("Error fetching match data. Status code: %d", response.status_code)
         return [], None
 
     matches_data = response.json()
+    logging.debug("Existing match data: %s", matches_data)
 
-    # Create a new list for this round if it doesn't already exist
     round_key = f"round_{round_number}"
     if round_key not in matches_data:
         matches_data[round_key] = []
 
-    # Shuffle teams and create match details
+    logging.info("Shuffling teams and preparing matches...")
     random.shuffle(teams)
     current_time = datetime.now()
     left_out_team = None
 
     if len(teams) % 2 != 0:
         left_out_team = teams.pop()
+        logging.info("Left out team for this round: %s", left_out_team)
 
-    match_id = len(matches_data[round_key]) + 1  # Continue match IDs from the last
+    match_id = len(matches_data[round_key]) + 1
 
     for i in range(0, len(teams), 2):
         match_details = {
@@ -169,18 +186,21 @@ def schedule_matches(teams, round_number):
             "room_card": None
         }
         matches_data[round_key].append(match_details)
+        logging.debug("Scheduled match: %s", match_details)
         match_id += 1
 
-    # Assign room cards to all matches without one
-    assign_rc(matches_data[round_key])
+    logging.info("Assigning room cards to matches in this round...")
+    assign_rc()
 
-    # Update the match data back to the server
+    logging.info("Updating match data with new schedule...")
     update_response = requests.put(matURL, headers=headers, json=matches_data)
     if update_response.status_code != 200:
-        print("Error updating match data.")
+        logging.error("Error updating match data. Status code: %d", update_response.status_code)
         return [], left_out_team
 
+    logging.info("Match scheduling completed successfully.")
     return matches_data[round_key], left_out_team
+
 
 # Function to save tournament data
 def save_tournament_data(tournament_data):
