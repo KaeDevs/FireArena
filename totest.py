@@ -75,7 +75,7 @@ idURL = "https://api.jsonbin.io/v3/b/679255e6e41b4d34e47d86da"
 # Function to assign a room card to a match
 def assign_rc(matches):
     """
-    Assign a room card to the first match that doesn't already have one.
+    Assign room cards to matches that don't already have one.
     """
     # Fetch the room card data
     response = requests.get(idURL, headers=headers)
@@ -88,15 +88,17 @@ def assign_rc(matches):
         print("No room cards available.")
         return False
 
-    # Pop the first available room card
-    ele = upreq["rc"].pop(0)
-
-    # Assign the room card to the first match without one
+    # Loop through matches and assign available room cards
     for match in matches:
-        if "room_card" not in match:  # Only assign if 'room_card' is not already present
+        if "room_card" not in match or match["room_card"] is None:  # Only assign if 'room_card' is not already assigned
+            if not upreq["rc"]:  # Break if no room cards are left
+                print("No more room cards available.")
+                break
+
+            # Pop the first available room card
+            ele = upreq["rc"].pop(0)
             match["room_card"] = ele
             print(f"Assigned room card {ele} to match {match['match_id']}.")
-            break
 
     # Update the room card list back to the server
     update_response = requests.put(idURL, headers=headers, json=upreq)
@@ -106,20 +108,34 @@ def assign_rc(matches):
 
     return True
 
-# Function to schedule matches for a round
+
 def schedule_matches(teams, round_number):
     """
     Schedules matches for a given round and assigns room cards if available.
     """
+    # Fetch existing matches (if any)
+    response = requests.get(matURL, headers=headers)
+    if response.status_code != 200:
+        print("Error fetching match data.")
+        return [], None
+
+    matches_data = response.json()
+
+    # Create a new list for this round if it doesn't already exist
+    round_key = f"round_{round_number}"
+    if round_key not in matches_data:
+        matches_data[round_key] = []
+
+    # Shuffle teams and create match details
     random.shuffle(teams)
     current_time = datetime.now()
-    matches = []
     left_out_team = None
 
     if len(teams) % 2 != 0:
         left_out_team = teams.pop()
 
-    match_id = 1
+    match_id = len(matches_data[round_key]) + 1  # Continue match IDs from the last
+
     for i in range(0, len(teams), 2):
         match_details = {
             "round": round_number,
@@ -133,14 +149,19 @@ def schedule_matches(teams, round_number):
             "winner": None,
             "room_card": None
         }
-        matches.append(match_details)
+        matches_data[round_key].append(match_details)
         match_id += 1
 
-    # Assign a room card to one match if available
-    assign_rc(matches)
+    # Assign room cards to all matches without one
+    assign_rc(matches_data[round_key])
 
-    return matches, left_out_team
+    # Update the match data back to the server
+    update_response = requests.put(matURL, headers=headers, json=matches_data)
+    if update_response.status_code != 200:
+        print("Error updating match data.")
+        return [], left_out_team
 
+    return matches_data[round_key], left_out_team
 
 # Function to save tournament data
 def save_tournament_data(tournament_data):
