@@ -73,41 +73,60 @@ def get_teams_data():
 idURL = "https://api.jsonbin.io/v3/b/679255e6e41b4d34e47d86da"
 
 # Function to assign a room card to a match
-def assign_rc(matches):
+import requests
+
+# Assign Room Cards to Scheduled Matches
+def assign_rc():
     """
-    Assign room cards to matches that don't already have one.
+    Assign room cards to already-scheduled matches that don't have one.
     """
-    # Fetch the room card data
-    response = requests.get(idURL, headers=headers)
-    if response.status_code != 200:
+    # Fetch room card data
+    rc_response = requests.get(idURL, headers=headers)
+    if rc_response.status_code != 200:
         print("Error fetching room card data.")
         return False
 
-    upreq = response.json().get("record", {})
-    if not upreq.get("rc"):
+    rc_data = rc_response.json().get("record", {})
+    if not rc_data.get("rc"):
         print("No room cards available.")
         return False
 
-    # Loop through matches and assign available room cards
-    for match in matches:
-        if "room_card" not in match or match["room_card"] is None:  # Only assign if 'room_card' is not already assigned
-            if not upreq["rc"]:  # Break if no room cards are left
-                print("No more room cards available.")
-                break
+    # Fetch match data
+    match_response = requests.get(matURL, headers=headers)
+    if match_response.status_code != 200:
+        print("Error fetching match data.")
+        return False
 
-            # Pop the first available room card
-            ele = upreq["rc"].pop(0)
-            match["room_card"] = ele
-            print(f"Assigned room card {ele} to match {match['match_id']}.")
+    match_data = match_response.json()
 
-    # Update the room card list back to the server
-    update_response = requests.put(idURL, headers=headers, json=upreq)
-    if update_response.status_code != 200:
+    # Iterate through all rounds and assign room cards
+    room_cards = rc_data["rc"]
+    for round_key, matches in match_data.items():
+        if round_key.startswith("round_"):  # Process only round keys
+            for match in matches:
+                if "room_card" not in match or match["room_card"] is None:  # Assign if no room card
+                    if not room_cards:
+                        print("No more room cards available.")
+                        break
+
+                    # Pop the next available room card
+                    room_card = room_cards.pop(0)
+                    match["room_card"] = room_card
+                    print(f"Assigned room card {room_card} to match {match['match_id']} in {round_key}.")
+
+    # Update the match data back to the server
+    match_update_response = requests.put(matURL, headers=headers, json=match_data)
+    if match_update_response.status_code != 200:
+        print("Error updating match data.")
+        return False
+
+    # Update the room card data back to the server
+    rc_update_response = requests.put(idURL, headers=headers, json=rc_data)
+    if rc_update_response.status_code != 200:
         print("Error updating room card data.")
         return False
 
     return True
-
 
 def schedule_matches(teams, round_number):
     """
