@@ -123,7 +123,7 @@ def schedule_matches(teams, round_number):
     for i in range(0, len(teams), 2):
         match_details = {
             "round": round_number,
-            
+            "match_id": match_id,
             "team1": teams[i]['team_name'],
             "team1_id": teams[i]['id'],
             "team2": teams[i + 1]['team_name'],
