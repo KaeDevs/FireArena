@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 TOURNAMENT_REGISTRATIONS = {
     "username": "kavinm",
     "id":"123temp",
+    "match_id": 1,
     "team_name": "team2",
     "player1": "Player 1a",
     "player2": "Player 2b",
@@ -64,6 +65,7 @@ def start(update: Update, context: CallbackContext) -> None:
         "Use /register to register your team or yourself for the tournament.\n"
         "Use /schedule to view upcoming matches.\n"
         "Use /payment to complete your registration fee.\n" 
+        "Use /mymatch to view your match details and get your room id.\n"
         "For any issues, contact the admin through this bot."
     )
 
