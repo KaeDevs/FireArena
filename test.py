@@ -139,7 +139,7 @@ def my_match( update: Update, context: CallbackContext) -> None:
 
 
     if not found_match:
-        update.message.reply_text(f"No matches found for Team ID: {team_id}"
+        update.message.reply_text(f"No matches found for your Team ID"
                                   "\nWatch the Telegram group very closely for your turn and schedules")
 
 def get_player4(update: Update, context: CallbackContext) -> int:
