@@ -222,19 +222,20 @@ def payment(update: Update, context: CallbackContext) -> None:
 def submit_txn(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
 
-   
+    # Check if the user is registered
     upreq = requests.get(idURL, headers=headers).json()["record"]
     if chat_id not in upreq["ids"]:
         update.message.reply_text("You need to register first using /register.")
         return
 
+    # Check if a transaction ID was provided
     if not context.args:
-        update.message.reply_text("Please provide a valid transaction ID after the command. Example: /submit_txn 1234567890")
+        update.message.reply_text("Please provide a valid transaction ID after the command. Example: /submitpayment 1234567890")
         return
 
     transaction_id = context.args[0]
 
-    
+    # Fetch player data
     response = requests.get(URL, headers=headers)
     if response.status_code != 200:
         update.message.reply_text("Error fetching player data. Please try again later.")
@@ -243,25 +244,28 @@ def submit_txn(update: Update, context: CallbackContext) -> None:
     player_data = response.json()["record"]
     player_found = False
 
-    # Step 4: Search for the player and update the payment field
+    # Search for the player and update the transaction ID
     for player in player_data:
         if player.get("id") == chat_id:
-            player["transaction_id"] = transaction_id  # Update with the transaction ID
+            player["transaction_id"] = transaction_id  # Update with the provided transaction ID
             player_found = True
-            break  # Stop after finding the player
+            break
 
     if not player_found:
         update.message.reply_text("No player found with your registered ID.")
         return
 
-    # Step 5: Update the player data back to the server
-    update_response = requests.put(URL, headers=headers, json=player_data)
+    # Update player data back to the server with proper payload format
+    update_response = requests.put(URL, headers=headers, json= player_data)
     if update_response.status_code != 200:
         update.message.reply_text("Error updating transaction data. Please try again later.")
         return
 
-    # Step 6: Confirmation message
+    # Confirmation message
     update.message.reply_text("Transaction ID submitted successfully. Please wait for verification.")
+
+# Correct command handler registration
+dispatcher.add_handler(CommandHandler("submitpayment", submit_txn))
 
 
 
