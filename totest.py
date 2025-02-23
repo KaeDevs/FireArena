@@ -173,7 +173,7 @@ def schedule_matches(teams, round_number):
 
     for i in range(0, len(teams), 2):
         match_details = {
-            "round": round_number,
+            
             "match_id": match_id,
             "team1": teams[i]['team_name'],
             "team1_id": teams[i]['id'],
@@ -217,55 +217,54 @@ def process_tournament():
     if not tournament_data:
         return
 
-    # Step 2: Check if round 1 is empty
-    if "round_1" not in tournament_data or not isinstance(tournament_data["round_1"], list) or not tournament_data["round_1"]:
-        print("Round 1 is empty. Scheduling matches for Round 1...")
+    # Initialize "rounds" list if not present
+    if "rounds" not in tournament_data:
+        tournament_data["rounds"] = []
+
+    # Step 2: Check if the tournament has any scheduled matches
+    if not tournament_data["rounds"]:
+        print("No matches found. Scheduling initial matches...")
         teams_data = get_teams_data()
         if not teams_data:
             return
 
-        round_one_matches, left_out_team = schedule_matches(teams_data, 1)
-        tournament_data["round_1"] = round_one_matches
+        initial_matches, left_out_team = schedule_matches(teams_data, 1)
+        tournament_data["rounds"] = initial_matches
         tournament_data["left_out_team"] = left_out_team['team_name'] if left_out_team else None
         save_tournament_data(tournament_data)
-        print("Round 1 matches scheduled.")
+        print("Initial matches scheduled.")
         return
 
-    # Step 3: Process next round if all winners in current round are available
-    current_round = 1
-    while f"round_{current_round}" in tournament_data:
-        round_matches = tournament_data[f"round_{current_round}"]
+    # Step 3: Process the next round if all winners are available
+    print("Processing next round...")
 
-        # Debugging: Print the structure of round_matches
-        print(f"Debug: round_{current_round} matches - {round_matches}")
-        
-        # Validate that round_matches is a list of dictionaries
-        if not isinstance(round_matches, list) or not all(isinstance(match, dict) for match in round_matches):
-            print(f"Error: round_{current_round} does not contain valid match data.")
-            return
+    # Check if any match has a null winner
+    if any(match.get('winner') is None for match in tournament_data["rounds"]):
+        print("There are incomplete matches. Waiting for results.")
+        return
 
-        # Check if any match has a null winner
-        if any(match.get('winner') is None for match in round_matches):
-            print(f"Round {current_round} has incomplete matches. Waiting for results.")
-            return
+    # Collect winners from the last round
+    winners = [
+        {"team_name": match['winner']}
+        for match in tournament_data["rounds"] if match['winner']
+    ]
 
-        # Collect winners from the current round
-        winners = [
-            {"team_name": match['winner']}
-            for match in round_matches if match['winner']
-        ]
-        if tournament_data["left_out_team"]:
-            winners.append({"team_name": tournament_data["left_out_team"]})
+    if tournament_data.get("left_out_team"):
+        winners.append({"team_name": tournament_data["left_out_team"]})
 
-        # Schedule the next round
-        next_round = current_round + 1
-        print(f"Scheduling matches for Round {next_round}...")
-        next_round_matches, left_out_team = schedule_matches(winners, next_round)
-        tournament_data[f"round_{next_round}"] = next_round_matches
-        tournament_data["left_out_team"] = left_out_team['team_name'] if left_out_team else None
-        save_tournament_data(tournament_data)
-        print(f"Round {next_round} matches scheduled.")
-        current_round = next_round
+    # Check if there's only one winner left (tournament winner)
+    if len(winners) == 1:
+        print(f"Tournament Winner: {winners[0]['team_name']}")
+        return
+
+    # Schedule next round matches
+    print("Scheduling matches for the next round...")
+    next_round_number = (len(tournament_data["rounds"]) // 2) + 1
+    next_round_matches, left_out_team = schedule_matches(winners, next_round_number)
+    tournament_data["rounds"].extend(next_round_matches)
+    tournament_data["left_out_team"] = left_out_team['team_name'] if left_out_team else None
+    save_tournament_data(tournament_data)
+    print(f"Matches for round {next_round_number} scheduled.")
 
 # Run the tournament processing
 if __name__ == "__main__":

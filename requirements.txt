@@ -7,3 +7,4 @@ pymongo==3.12.1
 dnspython==2.2.1
 firebase-admin==6.1.0
 urllib3==1.26.7  # Ensure the right version of urllib3
+

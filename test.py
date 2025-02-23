@@ -247,8 +247,8 @@ def schedule(update: Update, context: CallbackContext) -> None:
 def clearmatch(update: Update, context: CallbackContext) -> None:
     if(TOURNAMENT_REGISTRATIONS["creator"] == True):
         
-        matreq = requests.put(url= matURL, headers= headers, json = {"round_1": [],
-  "round_2": [],
+        matreq = requests.put(url= matURL, headers= headers, json = {"rounds": [],
+  
   "left_out_team": None})
         update.message.reply_text(
             "Matches Cleared\n"
@@ -378,6 +378,7 @@ def enter_rc(update: Update, context: CallbackContext) -> int:
     
     RC = int(update.message.text)
     upreq = requests.get(idURL, headers= headers).json()["record"]
+    print(upreq);
     upreq["rc"].append(RC)
    
     update.message.reply_text("Thank you! I will add it to a team./nClick on /schedule to view the Schedule!")
