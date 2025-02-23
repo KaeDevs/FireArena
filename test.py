@@ -209,11 +209,10 @@ def payment(update: Update, context: CallbackContext) -> None:
 
 
 def schedule(update: Update, context: CallbackContext) -> None:
-
-    from totest import fetch_tournament_data, process_tournament 
+    from totest import fetch_tournament_data, process_tournament
 
     # Step 1: Process the tournament to update data
-    if(TOURNAMENT_REGISTRATIONS["creator"] == True):
+    if TOURNAMENT_REGISTRATIONS.get("creator"):
         process_tournament()
 
     # Step 2: Fetch updated tournament data
@@ -222,21 +221,24 @@ def schedule(update: Update, context: CallbackContext) -> None:
         update.message.reply_text("Error fetching tournament data.")
         return
 
-    # Step 3: Find the latest round with matches
-    latest_round = None
-    for round_number in sorted(tournament_data.keys()):
-        if round_number.startswith("round_") and isinstance(tournament_data[round_number], list):
-            if tournament_data[round_number]:  # Check if matches exist in this round
-                latest_round = round_number
+    # Step 3: Get all scheduled matches from "rounds"
+    if "rounds" in tournament_data and tournament_data["rounds"]:
+        matches = tournament_data["rounds"]
 
-    # Step 4: Prepare the reply
-    if latest_round:
-        matches = tournament_data[latest_round]
-        match_details = "\n".join([
-            f"Match {match['match_id']}: {match['team1']} vs {match['team2']} at {match['scheduled_time']} (Room: {match['match_room_id']})"
-            for match in matches
-        ])
-        reply_message = f"Upcoming Matches for {latest_round.capitalize()}:\n\n{match_details}"
+        # Filter upcoming matches (where the winner is still None)
+        upcoming_matches = [
+            match for match in matches if match.get("winner") is None
+        ]
+
+        # Step 4: Prepare the reply
+        if upcoming_matches:
+            match_details = "\n".join([
+                f"Match {match['match_id']}: {match['team1']} vs {match['team2']} at {match['scheduled_time']} (Room: {match['match_room_id']})"
+                for match in upcoming_matches
+            ])
+            reply_message = f"Upcoming Matches:\n\n{match_details}"
+        else:
+            reply_message = "All scheduled matches have been completed."
     else:
         reply_message = "No matches are scheduled at the moment."
 
