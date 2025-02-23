@@ -157,9 +157,8 @@ def schedule_matches(teams, round_number):
     matches_data = response.json()
     logging.debug("Existing match data: %s", matches_data)
 
-    round_key = f"round_{round_number}"
-    if round_key not in matches_data:
-        matches_data[round_key] = []
+    if "rounds" not in matches_data:
+        matches_data["rounds"] = []
 
     logging.info("Shuffling teams and preparing matches...")
     random.shuffle(teams)
@@ -170,22 +169,19 @@ def schedule_matches(teams, round_number):
         left_out_team = teams.pop()
         logging.info("Left out team for this round: %s", left_out_team)
 
-    match_id = len(matches_data[round_key]) + 1
+    match_id = len(matches_data["rounds"]) + 1
 
     for i in range(0, len(teams), 2):
         match_details = {
-            "round": round_number,
             "match_id": match_id,
             "team1": teams[i]['team_name'],
-            "team1_id": teams[i]['id'],
             "team2": teams[i + 1]['team_name'],
-            "team2_id": teams[i + 1]['id'],
-            "match_room_id": f"room_{round_number}_{match_id}",
             "scheduled_time": (current_time + timedelta(hours=match_id * 2)).strftime('%Y-%m-%d %H:%M:%S'),
+            "match_room_id": f"room_{round_number}_{match_id}",
             "winner": None,
             "room_card": None
         }
-        matches_data[round_key].append(match_details)
+        matches_data["rounds"].append(match_details)
         logging.debug("Scheduled match: %s", match_details)
         match_id += 1
 
@@ -199,7 +195,7 @@ def schedule_matches(teams, round_number):
         return [], left_out_team
 
     logging.info("Match scheduling completed successfully.")
-    return matches_data[round_key], left_out_team
+    return matches_data["rounds"], left_out_team
 
 
 # Function to save tournament data

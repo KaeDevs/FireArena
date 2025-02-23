@@ -258,6 +258,20 @@ def clearmatch(update: Update, context: CallbackContext) -> None:
             "Players cannot clear matches\n"
         )
 
+def assign_winner(update: Update, context: CallbackContext) -> None:
+    if(TOURNAMENT_REGISTRATIONS["creator"] == True):
+        
+        matreq = requests.put(url= matURL, headers= headers, json = {"round_1": [],
+  "round_2": [],
+  "left_out_team": None})
+        update.message.reply_text(
+            "Matches Cleared\n"
+        )
+    else:
+        update.message.reply_text(
+            "Players cannot clear matches\n"
+        )
+
 
 def clearregisters(update: Update, context: CallbackContext) -> None:
     if(TOURNAMENT_REGISTRATIONS["creator"] == True):
@@ -365,8 +379,7 @@ def enter_rc(update: Update, context: CallbackContext) -> int:
     RC = int(update.message.text)
     upreq = requests.get(idURL, headers= headers).json()["record"]
     upreq["rc"].append(RC)
-    upreq2 = requests.put(idURL, headers= headers, json = upreq)
-    
+   
     update.message.reply_text("Thank you! I will add it to a team./nClick on /schedule to view the Schedule!")
     return ConversationHandler.END
 # Define a new ConversationHandler for creator mode
@@ -413,6 +426,7 @@ dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("register", register))
 dispatcher.add_handler(CommandHandler("mymatch", my_match))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
+
 dispatcher.add_handler(CommandHandler("clearmatch", clearmatch))
 dispatcher.add_handler(CommandHandler("clearregisters", clearregisters))
 dispatcher.add_handler(CommandHandler("rules", rules))  # Add the rules handler
