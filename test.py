@@ -277,7 +277,9 @@ def verify_payment(update: Update, context: CallbackContext) -> None:
 
     # Extract player ID and transaction ID from the command
     player_id = context.args[0]
+    print("p id :" + player_id)
     provided_txn_id = context.args[1]
+    print("p id :" + provided_txn_id)
 
     # Fetch player data from the server
     response = requests.get(URL, headers=headers)
@@ -290,7 +292,7 @@ def verify_payment(update: Update, context: CallbackContext) -> None:
 
     # Search for the player using player_id
     for player in player_data:
-        if player.get("id") == player_id:
+        if player["id"] == player_id:
             player_found = True
             stored_txn_id = player.get("transaction_id")
 
