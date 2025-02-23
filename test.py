@@ -382,8 +382,9 @@ def enter_rc(update: Update, context: CallbackContext) -> int:
     upreq = requests.get(idURL, headers= headers).json()["record"]
     print(upreq);
     upreq["rc"].append(RC)
-   
     update.message.reply_text("Thank you! I will add it to a team./nClick on /schedule to view the Schedule!")
+    requests.put(idURL, headers=headers, json=upreq)
+    totest.assign_rc()
     return ConversationHandler.END
 # Define a new ConversationHandler for creator mode
 creator_mode_handler = ConversationHandler(

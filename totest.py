@@ -276,4 +276,5 @@ def process_tournament():
 
 # Run the tournament processing
 if __name__ == "__main__":
-    process_tournament()
+    # process_tournament()
+    assign_rc()
