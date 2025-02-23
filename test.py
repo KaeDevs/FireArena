@@ -48,6 +48,7 @@ TOURNAMENT_REGISTRATIONS = {
     "player2": "Player 2b",
     "player3": "Player 2b",
     "player4": "Player 2b",
+    "transaction_id": "false",
     "payment": "false",
     "roomid" : None,
     "creator" : False
@@ -220,9 +221,10 @@ def payment(update: Update, context: CallbackContext) -> None:
 
 def submit_txn(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
-    upreq = requests.get(idURL, headers= headers).json()["record"]
-    print(upreq)
-    if chat_id in upreq["ids"]:
+
+   
+    upreq = requests.get(idURL, headers=headers).json()["record"]
+    if chat_id not in upreq["ids"]:
         update.message.reply_text("You need to register first using /register.")
         return
 
@@ -231,27 +233,95 @@ def submit_txn(update: Update, context: CallbackContext) -> None:
         return
 
     transaction_id = context.args[0]
-    PAYMENTS[chat_id] = {
-        "transaction_id": transaction_id,
-        "verified": False
-    }
+
+    
+    response = requests.get(URL, headers=headers)
+    if response.status_code != 200:
+        update.message.reply_text("Error fetching player data. Please try again later.")
+        return
+
+    player_data = response.json()["record"]
+    player_found = False
+
+    # Step 4: Search for the player and update the payment field
+    for player in player_data:
+        if player.get("id") == chat_id:
+            player["transaction_id"] = transaction_id  # Update with the transaction ID
+            player_found = True
+            break  # Stop after finding the player
+
+    if not player_found:
+        update.message.reply_text("No player found with your registered ID.")
+        return
+
+    # Step 5: Update the player data back to the server
+    update_response = requests.put(URL, headers=headers, json=player_data)
+    if update_response.status_code != 200:
+        update.message.reply_text("Error updating transaction data. Please try again later.")
+        return
+
+    # Step 6: Confirmation message
     update.message.reply_text("Transaction ID submitted successfully. Please wait for verification.")
+
 
 
 # Admin verifies payment
 def verify_payment(update: Update, context: CallbackContext) -> None:
-    if not context.args:
-        update.message.reply_text("Please provide the chat ID to verify. Example: /verify_payment <chat_id>")
+    if len(context.args) != 2:
+        update.message.reply_text("Please provide the player ID and transaction ID. Example: /verify_payment <player_id> <transaction_id>")
         return
 
-    chat_id = int(context.args[0])  # Convert input to integer
-    if chat_id in PAYMENTS and not PAYMENTS[chat_id]["verified"]:
-        PAYMENTS[chat_id]["verified"] = True
-        update.message.reply_text(f"Payment for chat ID {chat_id} has been verified.")
-        # Notify user
-        context.bot.send_message(chat_id=chat_id, text="Your payment has been verified! You are now registered for the tournament.")
-    else:
-        update.message.reply_text("Invalid chat ID or payment already verified.")
+    # Extract player ID and transaction ID from the command
+    player_id = context.args[0]
+    provided_txn_id = context.args[1]
+
+    # Fetch player data from the server
+    response = requests.get(URL, headers=headers)
+    if response.status_code != 200:
+        update.message.reply_text("Error fetching player data. Please try again later.")
+        return
+
+    player_data = response.json()["record"]
+    player_found = False
+
+    # Search for the player using player_id
+    for player in player_data:
+        if player.get("id") == player_id:
+            player_found = True
+            stored_txn_id = player.get("transaction_id")
+
+            # Verify the transaction ID
+            if stored_txn_id == provided_txn_id:
+                if player.get("payment") == "true":
+                    update.message.reply_text("Payment is already verified for this player.")
+                    return
+                else:
+                    player["payment"] = "true"  # Mark payment as verified
+
+    # Update the player data back to the server
+                    update_response = requests.put(URL, headers=headers, json= player_data)
+                    if update_response.status_code != 200:
+                        update.message.reply_text("Error updating payment verification. Please try again later.")
+                        return
+                    break
+            else:
+                update.message.reply_text("Transaction ID does not match.")
+                return
+
+    if not player_found:
+        update.message.reply_text("No player found with the provided player ID.")
+        return
+
+    # Update the player data back to the server
+    update_response = requests.put(URL, headers=headers, json={"record": player_data})
+    if update_response.status_code != 200:
+        update.message.reply_text("Error updating payment verification. Please try again later.")
+        return
+
+    # Notify admin and player about successful verification
+    update.message.reply_text(f"Payment for player ID {player_id} has been verified.")
+    context.bot.send_message(chat_id=int(player_id), text="Your payment has been verified! You are now officially registered for the tournament.")
+
 
 def schedule(update: Update, context: CallbackContext) -> None:
     from totest import fetch_tournament_data, process_tournament
