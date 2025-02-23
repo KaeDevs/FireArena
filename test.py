@@ -199,14 +199,55 @@ def cancel(update: Update, context: CallbackContext) -> int:
 def payment(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     if chat_id in TOURNAMENT_REGISTRATIONS:
-        payment_link = "https://example.com/payment-link"
-        update.message.reply_text(
-            f"Please complete your registration fee using this link:\n{payment_link}\n"
-            "Once payment is complete, reply with the transaction ID."
-        )
+        qr_image_path = "qr_code.png"  # Replace with your actual file path
+
+        # Send QR code image
+        with open(qr_image_path, "rb") as qr_image:
+            context.bot.send_photo(
+                chat_id=chat_id,
+                photo=qr_image,
+                caption=(
+                    "Please scan this QR code using PhonePe to complete your registration fee.\n"
+                    "Once payment is complete, reply with the transaction ID using:\n"
+                    "`/submit_txn <Transaction_ID>`"
+                ),
+                parse_mode='Markdown'
+            )
     else:
         update.message.reply_text("You need to register first using /register.")
 
+def submit_txn(update: Update, context: CallbackContext) -> None:
+    chat_id = update.message.chat_id
+    if chat_id not in TOURNAMENT_REGISTRATIONS:
+        update.message.reply_text("You need to register first using /register.")
+        return
+
+    if not context.args:
+        update.message.reply_text("Please provide a valid transaction ID after the command. Example: /submit_txn 1234567890")
+        return
+
+    transaction_id = context.args[0]
+    PAYMENTS[chat_id] = {
+        "transaction_id": transaction_id,
+        "verified": False
+    }
+    update.message.reply_text("Transaction ID submitted successfully. Please wait for verification.")
+
+
+# Admin verifies payment
+def verify_payment(update: Update, context: CallbackContext) -> None:
+    if not context.args:
+        update.message.reply_text("Please provide the chat ID to verify. Example: /verify_payment <chat_id>")
+        return
+
+    chat_id = int(context.args[0])  # Convert input to integer
+    if chat_id in PAYMENTS and not PAYMENTS[chat_id]["verified"]:
+        PAYMENTS[chat_id]["verified"] = True
+        update.message.reply_text(f"Payment for chat ID {chat_id} has been verified.")
+        # Notify user
+        context.bot.send_message(chat_id=chat_id, text="Your payment has been verified! You are now registered for the tournament.")
+    else:
+        update.message.reply_text("Invalid chat ID or payment already verified.")
 
 def schedule(update: Update, context: CallbackContext) -> None:
     from totest import fetch_tournament_data, process_tournament
@@ -427,6 +468,9 @@ dispatcher.add_handler(creator_mode_handler)
 dispatcher.add_handler(rc_Handler)
 dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler("payment", payment))
+dispatcher.add_handler(CommandHandler("submitpayment", submit_txn))
+dispatcher.add_handler(CommandHandler("verifypayment", verify_payment))
+# dispatcher.add_handler(CommandHandler("payment", payment))
 dispatcher.add_handler(CommandHandler("register", register))
 dispatcher.add_handler(CommandHandler("mymatch", my_match))
 dispatcher.add_handler(CommandHandler("schedule", schedule))
