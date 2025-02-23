@@ -111,7 +111,7 @@ def assign_rc():
         logging.error("Error fetching match data. Status code: %d", match_response.status_code)
         return False
 
-    match_data = match_response.json()
+    match_data = match_response.json()["record"]
     logging.debug("Match data fetched: %s", match_data)
 
     room_cards = rc_data["rc"]

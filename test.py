@@ -110,39 +110,39 @@ def get_player3(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Enter Player 4's username:")
     return PLAYER4
 
-def my_match( update: Update, context: CallbackContext) -> None:
+def my_match(update: Update, context: CallbackContext) -> None:
     team_id = update.message.chat_id
+
+    # Step 1: Fetch match data
     response = requests.get(matURL, headers=headers)
     if response.status_code != 200:
-        print("Error fetching match data.")
-        return None
+        update.message.reply_text("Error fetching match data. Please try again later.")
+        return
 
-    matches_data = response.json()["record"]
+    matches_data = response.json().get("record", {}).get("rounds", [])
     found_match = False
 
-    # Iterate over all rounds and matches to find the team
-    for round_key, matches in matches_data.items():
-        if round_key.startswith("round_"):
-            for match in matches:
-                print(match)
-                if match.get("team1_id") == team_id or match.get("team2_id") == team_id:
-                    found_match = True
-                    # Display match details
-                    room_card = match.get("room_card", "No room card assigned \n Wait for the creator to create a room card")
-                    update.message.reply_text(f"\nMatch Found in {round_key}:"
-                    f"\nMatch ID: {match['match_id']}"
-                    f"\nTeam 1: {match['team1']} "
-                    f"\nTeam 2: {match['team2']} "
-                    # f"Match Room ID: {match['match_room_id']}"
-                    f"\nScheduled Time: {match['scheduled_time']}"
-                    
-                    f"\nRoom Card: {room_card}\n")
-                        
+    # Step 2: Search through all matches for the team
+    for match in matches_data:
+        if match.get("team1_id") == team_id or match.get("team2_id") == team_id:
+            found_match = True
+            # Step 3: Display match details
+            room_card = match.get("room_card", "No room card assigned yet.\nWait for the creator to create a room.")
+            update.message.reply_text(
+                f"🏆 **Match Found:**\n"
+                f"🆔 Match ID: {match['match_id']}\n"
+                f"🔵 Team 1: {match['team1']}\n"
+                f"🔴 Team 2: {match['team2']}\n"
+                f"🕒 Scheduled Time: {match['scheduled_time']}\n"
+                f"🎫 Room Card: {room_card}\n"
+            )
 
-
+    # Step 4: If no match found
     if not found_match:
-        update.message.reply_text(f"No matches found for your Team ID"
-                                  "\nWatch the Telegram group very closely for your turn and schedules")
+        update.message.reply_text(
+            "🚫 No matches found for your Team ID.\n"
+            "Keep an eye on the Telegram group for schedules and updates."
+        )
 
 def get_player4(update: Update, context: CallbackContext) -> int:
     chat_id = update.message.chat_id
