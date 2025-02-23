@@ -90,7 +90,7 @@ logging.basicConfig(
 # Assign Room Cards to Already-Scheduled Matches
 def assign_rc():
     """
-    Assign room cards to already-scheduled matches that don't have one.
+    Assign room cards to scheduled matches from the top, skipping those that already have one.
     """
     logging.info("Fetching room card data...")
     rc_response = requests.get(idURL, headers=headers)
@@ -116,24 +116,31 @@ def assign_rc():
 
     room_cards = rc_data["rc"]
     logging.info("Assigning room cards to matches...")
-    for round_key, matches in match_data.items():
-        if round_key.startswith("round_"):
-            for match in matches:
-                if "room_card" not in match or match["room_card"] is None:
-                    if not room_cards:
-                        logging.warning("No more room cards available.")
-                        break
 
-                    room_card = room_cards.pop(0)
-                    match["room_card"] = room_card
-                    logging.info("Assigned room card %d to match %d in %s.", room_card, match["match_id"], round_key)
+    # Iterate through the "rounds" list and assign room cards
+    if "rounds" in match_data:
+        for match in match_data["rounds"]:
+            if not room_cards:
+                logging.warning("No more room cards available.")
+                break
 
+            if match.get("room_card") is None:
+                room_card = room_cards.pop(0)
+                match["room_card"] = room_card
+                logging.info("Assigned room card %d to match %d.", room_card, match["match_id"])
+
+    else:
+        logging.error("No 'rounds' key found in match data.")
+        return False
+
+    # Update match data
     logging.info("Updating match data...")
     match_update_response = requests.put(matURL, headers=headers, json=match_data)
     if match_update_response.status_code != 200:
         logging.error("Error updating match data. Status code: %d", match_update_response.status_code)
         return False
 
+    # Update room card data
     logging.info("Updating room card data...")
     rc_update_response = requests.put(idURL, headers=headers, json=rc_data)
     if rc_update_response.status_code != 200:
@@ -142,6 +149,7 @@ def assign_rc():
 
     logging.info("Room card assignment completed successfully.")
     return True
+
 
 # Schedule Matches for a Round
 def schedule_matches(teams, round_number):
@@ -189,7 +197,7 @@ def schedule_matches(teams, round_number):
         match_id += 1
 
     logging.info("Assigning room cards to matches in this round...")
-    assign_rc()
+    # assign_rc()
 
     logging.info("Updating match data with new schedule...")
     update_response = requests.put(matURL, headers=headers, json=matches_data)
