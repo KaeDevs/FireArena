@@ -173,11 +173,14 @@ def schedule_matches(teams, round_number):
 
     for i in range(0, len(teams), 2):
         match_details = {
+            "round": round_number,
             "match_id": match_id,
             "team1": teams[i]['team_name'],
+            "team1_id": teams[i]['id'],
             "team2": teams[i + 1]['team_name'],
-            "scheduled_time": (current_time + timedelta(hours=match_id * 2)).strftime('%Y-%m-%d %H:%M:%S'),
+            "team2_id": teams[i + 1]['id'],
             "match_room_id": f"room_{round_number}_{match_id}",
+            "scheduled_time": (current_time + timedelta(hours=match_id * 2)).strftime('%Y-%m-%d %H:%M:%S'),
             "winner": None,
             "room_card": None
         }
@@ -199,6 +202,7 @@ def schedule_matches(teams, round_number):
 
 
 # Function to save tournament data
+    
 def save_tournament_data(tournament_data):
     response = requests.put(matURL, headers=headers, json=tournament_data)
     if response.status_code == 200:
