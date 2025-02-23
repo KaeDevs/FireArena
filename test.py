@@ -198,7 +198,9 @@ def cancel(update: Update, context: CallbackContext) -> int:
 
 def payment(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
-    if chat_id in TOURNAMENT_REGISTRATIONS:
+    upreq = requests.get(idURL, headers= headers).json()["record"]
+    print(upreq)
+    if chat_id in upreq["ids"]:
         qr_image_path = "qr_code.png"  # Replace with your actual file path
 
         # Send QR code image
@@ -218,7 +220,9 @@ def payment(update: Update, context: CallbackContext) -> None:
 
 def submit_txn(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
-    if chat_id not in TOURNAMENT_REGISTRATIONS:
+    upreq = requests.get(idURL, headers= headers).json()["record"]
+    print(upreq)
+    if chat_id in upreq["ids"]:
         update.message.reply_text("You need to register first using /register.")
         return
 
