@@ -277,7 +277,8 @@ def verify_payment(update: Update, context: CallbackContext) -> None:
 
     # Extract player ID and transaction ID from the command
     player_id = int(context.args[0])
-    print("p id :" + player_id)
+    print("p id :" )
+    
     provided_txn_id = context.args[1]
     print("p id :" + provided_txn_id)
 
