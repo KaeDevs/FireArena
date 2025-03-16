@@ -289,10 +289,12 @@ def verify_payment(update: Update, context: CallbackContext) -> None:
 
     player_data = response.json()["record"]
     player_found = False
-
+    print("Player data :")
+    print(player_data)
     # Search for the player using player_id
     for player in player_data:
-        print("player details :" + player)
+        # print("player details :" + player)
+        print(player["id"])
         if player["id"] == player_id:
             player_found = True
             stored_txn_id = player.get("transaction_id")
