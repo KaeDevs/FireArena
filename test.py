@@ -292,6 +292,7 @@ def verify_payment(update: Update, context: CallbackContext) -> None:
 
     # Search for the player using player_id
     for player in player_data:
+        print("player details :" + player)
         if player["id"] == player_id:
             player_found = True
             stored_txn_id = player.get("transaction_id")
